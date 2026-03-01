@@ -303,9 +303,10 @@ async function main() {
     console.log(regenAnchor ? '  Regenerating anchor image...' : '  No cached anchor found — generating...');
     const setting  = (await rl.question('  Setting (e.g. "beach at golden hour"): ')).trim();
     const clothing = (await rl.question('  Clothing (e.g. "flowy white sundress"): ')).trim();
-    const prompt = `A photorealistic low-angle one-handed selfie shot of a woman wearing ${clothing}, brunette hair, ${setting}. Camera held low at hip/waist level pointing upward — the woman is NOT looking at the camera, she is gazing upward with her chin lifted, side-profile or three-quarter face view. Her shoulder and upper body fill the lower portion of the frame. The background above her shows dramatic sky, light, or nature. Warm golden sunlight, volumetric light rays, subtle lens flare. iPhone camera quality, candid authentic moment, slight imperfect framing. IMPORTANT: only ONE arm/hand visible as the selfie arm extending naturally below or to the side of frame — no second hand, no phone visible in frame.`;
+    const prompt = `Candid low-angle portrait of a young brunette woman wearing ${clothing}, ${setting}. Camera angle is from below looking upward at her. She gazes upward toward the sky with her chin lifted, side-profile or three-quarter view. Her face and shoulder fill the lower portion of the frame; sky, trees, or landscape fill the frame above her. Natural light, subtle lens flare, slightly imperfect framing. Photorealistic, candid moment.`;
+    const negative_prompt = `smartphone, iphone, phone, mobile phone, device, screen, hand, arm, selfie stick, technology, gadget`;
     const predId = await replicateSubmit('ideogram-ai/ideogram-v3-quality', {
-      prompt, aspect_ratio: '1:1', magic_prompt_option: 'Off',
+      prompt, negative_prompt, aspect_ratio: '1:1', magic_prompt_option: 'Off',
     });
     const url = await replicatePoll(predId, 'anchor image (ideogram)');
     await downloadTo(url, ANCHOR_PATH);
