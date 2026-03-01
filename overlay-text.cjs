@@ -4,8 +4,15 @@
 
 'use strict';
 
-const { createCanvas, loadImage } = require('@napi-rs/canvas');
+const { createCanvas, loadImage, GlobalFonts } = require('@napi-rs/canvas');
 const fs = require('fs');
+const path = require('path');
+
+// Register handwriting font if available
+const FONT_PATH = path.join(__dirname, 'fonts', 'Caveat-Bold.ttf');
+const FONT_FAMILY = fs.existsSync(FONT_PATH)
+  ? (GlobalFonts.registerFromPath(FONT_PATH, 'Caveat'), 'Caveat')
+  : 'sans-serif';
 
 async function run() {
   const [,, inputPath, text, outputPath] = process.argv;
@@ -29,24 +36,24 @@ async function run() {
   const paddingX = Math.round(width * 0.10);
   const maxTextWidth = width - paddingX * 2;
 
-  // Start at ~6% of image width (~61px on 1024px), shrink until ≤5 lines
-  let fontSize = Math.round(width * 0.060);
+  // Start at ~7% of image width, shrink until ≤6 lines (slightly larger budget for handwriting font)
+  let fontSize = Math.round(width * 0.070);
   let lines;
 
   for (let attempt = 0; attempt < 8; attempt++) {
-    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.font = `bold ${fontSize}px ${FONT_FAMILY}`;
     lines = wordWrap(ctx, text, maxTextWidth);
-    if (lines.length <= 5) break;
+    if (lines.length <= 6) break;
     fontSize = Math.round(fontSize * 0.82);
   }
 
-  const lineHeight = fontSize * 1.35;
+  const lineHeight = fontSize * 1.4;
   const blockH = lines.length * lineHeight;
   const startY = (height - blockH) / 2 + lineHeight / 2;
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = `bold ${fontSize}px sans-serif`;
+  ctx.font = `bold ${fontSize}px ${FONT_FAMILY}`;
 
   for (let i = 0; i < lines.length; i++) {
     const x = width / 2;
@@ -56,7 +63,7 @@ async function run() {
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
     ctx.strokeStyle = 'black';
-    ctx.lineWidth = Math.round(fontSize * 0.10);
+    ctx.lineWidth = Math.round(fontSize * 0.06);
     ctx.lineJoin = 'round';
     ctx.strokeText(lines[i], x, y);
 

@@ -233,18 +233,24 @@ Niche: ${profile.niche}
 
 SLIDE 1 — ANCHOR SLIDE (brand identity selfie photo, already cached):
 - Provide "label" only — no "image_prompt"
-- Label is the hook text overlaid on the anchor girl image
+- Label is the hook/curiosity text overlaid on the anchor girl image (e.g. "5 things i started doing that changed everything", "what no one tells you about slow mornings")
+- Should make the viewer want to swipe
 
 SLIDES 2+ — lifestyle imagery:
-- Provide both "label" (punchy text overlay) and "image_prompt" (Replicate prompt)
-- NO humans, faces, hands, or any body parts in image_prompt
+- Provide both "label" (tip/hack text overlay) and "image_prompt" (Replicate prompt)
+- Labels must be ACTUAL TIPS OR HABITS — specific, actionable, and a full sentence (12–25 words)
+- Write labels in lowercase casual first-person voice, like a friend texting a life hack
+- Good examples: "i switched to drinking warm lemon water first thing and my digestion completely changed", "journaling for 5 minutes before touching my phone made my whole day feel different", "the 2-minute reset: step outside, breathe deep, no phone — try it when you're overwhelmed"
+- Bad examples (too short/vague): "light that doesn't rush you", "a drink that tastes like patience"
+- NO faces or full bodies in image_prompt — avoid people entirely EXCEPT close-up hands/wrists interacting with an object or texture are allowed and encouraged
 - NO text, typography, diagrams, or infographics in image_prompt
-- Style: warm golden tones, soft bokeh, photorealistic, Pinterest aesthetic
-- Vary subjects across slides: mix drinks, nature/landscape, cozy interiors, food, fashion accessories (no people)
-- Build a visual arc: hook → supporting moments → satisfying close
+- Aesthetic: raw, candid, unfiltered — like a real iPhone photo or analog film shot, not a styled commercial shoot
+- Mood varies per slide: can be moody/dark with dramatic atmospheric light, cool natural daylight, warm amber evening, or overcast softness — avoid forcing every slide to be "golden hour"
+- Subjects: lean into sensory, textural moments — a hand trailing through river water, rain on a window, bare feet on wet stones, a steaming cup on a rainy windowsill, a journal page in soft overcast light, tangled earbuds on a nightstand, candle flame close-up, overgrown moss on old stone
+- Build a visual arc: hook → tip 1 → tip 2 → tip 3 → satisfying close
 
-Image prompt formula:
-"{Subject}. {Light quality}. {Color mood}. {Composition detail}. Soft bokeh. Pinterest aesthetic, warm film photography, photorealistic, no text."
+Image prompt formula (follow this structure):
+"{Specific subject and action or texture}. {Authentic light quality — e.g. overcast diffused, amber streetlight, soft window light, harsh midday}. {Color mood — e.g. muted greens and stone grey, warm amber and shadow, cool blue-white}. {Composition detail — e.g. extreme close-up POV, low angle, slightly out of focus foreground}. Analog film grain, candid unfiltered iPhone photo aesthetic, photorealistic, no text, no people."
 
 Return JSON only (no markdown fences):
 {
@@ -297,7 +303,7 @@ async function main() {
     console.log(regenAnchor ? '  Regenerating anchor image...' : '  No cached anchor found — generating...');
     const setting  = (await rl.question('  Setting (e.g. "beach at golden hour"): ')).trim();
     const clothing = (await rl.question('  Clothing (e.g. "flowy white sundress"): ')).trim();
-    const prompt = `A photorealistic POV, high-angle, one-handed SELFIE-STYLE shot of a woman wearing ${clothing}, brunette hair, from a slightly over-the-shoulder perspective FROM BEHIND AT AN ANGLE, ${setting}, natural lighting, candid moment, iPhone camera quality, imperfect framing, casual everyday moment, slight motion blur, subtle lens flare. IMPORTANT: SIDE PROFILE OF WOMAN'S FACE, HER FEATURES ARE IN SHADOW`;
+    const prompt = `A photorealistic low-angle one-handed selfie shot of a woman wearing ${clothing}, brunette hair, ${setting}. Camera held low at hip/waist level pointing upward — the woman is NOT looking at the camera, she is gazing upward with her chin lifted, side-profile or three-quarter face view. Her shoulder and upper body fill the lower portion of the frame. The background above her shows dramatic sky, light, or nature. Warm golden sunlight, volumetric light rays, subtle lens flare. iPhone camera quality, candid authentic moment, slight imperfect framing. IMPORTANT: only ONE arm/hand visible as the selfie arm extending naturally below or to the side of frame — no second hand, no phone visible in frame.`;
     const predId = await replicateSubmit('ideogram-ai/ideogram-v3-quality', {
       prompt, aspect_ratio: '1:1', magic_prompt_option: 'Off',
     });
