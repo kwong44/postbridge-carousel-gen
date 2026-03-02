@@ -12,7 +12,7 @@ import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { execSync } from 'node:child_process';
 import {
-  mkdirSync, existsSync, readFileSync, writeFileSync, statSync, copyFileSync,
+  mkdirSync, existsSync, readFileSync, writeFileSync, statSync, copyFileSync, rmSync,
 } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -391,6 +391,8 @@ async function main() {
     mediaIds.push(mid);
     console.log(`media_id ${mid}`);
   }
+  rmSync(tmp, { recursive: true, force: true });
+  console.log(`  Cleaned up tmp: ${tmp}`);
 
   const postBody = {
     caption: `${captionData.best_caption} ${captionData.best_hashtags.join(' ')}`,
