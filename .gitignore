@@ -2,3 +2,7 @@ node_modules/
 .env
 media/
 /tmp/
+state.json
+analytics.json
+logs/
+tiktok-analytics.csv

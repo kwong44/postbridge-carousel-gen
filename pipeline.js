@@ -37,13 +37,21 @@ const PROFILES = {
     audience: 'Women 18–30 interested in holistic wellness, mental health, slow living',
     tone:     'Warm, encouraging, aspirational but grounded. Feels like a friend who has it together.',
     hashtags: ['#wellness', '#selfcare', '#mindfulness', '#wellnesstok', '#fyp'],
+    imageStyle: `Raw, candid, unfiltered — like a real iPhone photo or analog film shot. Mood varies per slide: moody/dark with dramatic atmospheric light, cool natural daylight, warm amber evening, or overcast softness. Subjects: sensory textural moments — a hand trailing through river water, rain on a window, bare feet on wet stones, a steaming cup on a rainy windowsill, a journal page in soft overcast light.
+
+Image prompt formula: "{Specific subject and action or texture}. {Authentic light quality — overcast diffused, amber streetlight, soft window light, harsh midday}. {Color mood — muted greens and stone grey, warm amber and shadow, cool blue-white}. {Composition — extreme close-up POV, low angle, slightly out-of-focus foreground}. Analog film grain, candid unfiltered iPhone photo aesthetic, photorealistic, no text, no people."`,
   },
   upgrades: {
     accounts: [], // TBD — connect accounts in PostBridge first
-    niche:    'Self-improvement, productivity, AI tools, tech for everyday people',
-    audience: 'Curious builders, young professionals, tech-adjacent',
-    tone:     'Direct, smart, no fluff. Opinionated. Sounds like a person, not a brand.',
-    hashtags: ['#selfimprovement', '#productivity', '#aitools', '#buildinpublic', '#fyp'],
+    niche:    'Voice journaling, meditation, mindfulness, radical presence, inner work — promoting the Oasis app',
+    audience: 'Mixed gender 18–35 interested in journaling, meditation, CBT, stoicism, and intentional self-improvement',
+    tone:     'Calm, grounded, intentional. Quiet authority — a trusted guide, not a hype brand. No fluff. Speaks plainly about inner life and mental clarity.',
+    hashtags: ['#voicejournaling', '#meditation', '#mindfulness', '#selfimprovement', '#innerwork', '#journaling', '#radicalpresence', '#stoicism', '#oasisapp', '#fyp'],
+    imageStyle: `Elemental and grounded — raw natural textures that evoke presence and stillness. Subjects: bare hand pressing into wet moss, river stones in shallow water, fog on a forest floor, lichen on old rock, roots breaking through soil, rain on a flat stone surface, damp bark close-up, a single leaf in still water, morning mist over water.
+
+Color mood: deep grey-green, earth tones, muted stone and sage — no bright or saturated color. Light: overcast diffused, dappled forest canopy, soft grey northern light. Composition: extreme close-up with texture in sharp focus, or ground-level perspective.
+
+Image prompt formula: "{Specific natural subject and elemental texture}. {Overcast diffused or dappled forest light}. {Deep grey-green, earth and stone palette — no bright color}. {Extreme close-up or ground-level composition, texture in sharp focus}. Grounded elemental stillness, photorealistic, no text, no people."`,
   },
   lifestyle: {
     accounts: [], // TBD — connect accounts in PostBridge first
@@ -51,6 +59,9 @@ const PROFILES = {
     audience: 'Girls 16–28 who curate aesthetic feeds — matcha, travel, fashion, soft life',
     tone:     'Dreamy, aspirational, visually-led. Captions are short and vibe-y.',
     hashtags: ['#lifestyle', '#aesthetic', '#pinterestgirl', '#softlife', '#fyp'],
+    imageStyle: `Dreamy, aspirational, visually-led. Soft golden tones, aesthetic everyday objects.
+
+Image prompt formula: "{Subject and setting}. {Soft golden or warm light}. {Warm cream and blush palette}. {Editorial composition}. Aesthetic lifestyle photography, photorealistic, no text, no people."`,
   },
 };
 
@@ -129,7 +140,7 @@ async function pbUpload(filePath) {
 
 function overlayText(src, label, dest) {
   const escaped = label.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-  execSync(`node "${OVERLAY_SCRIPT}" "${src}" "${escaped}" "${dest}"`, {
+  execSync(`"${process.execPath}" "${OVERLAY_SCRIPT}" "${src}" "${escaped}" "${dest}"`, {
     cwd: ROOT,
     stdio: 'inherit',
   });
@@ -236,21 +247,32 @@ SLIDE 1 — ANCHOR SLIDE (brand identity selfie photo, already cached):
 - Label is the hook/curiosity text overlaid on the anchor girl image (e.g. "5 things i started doing that changed everything", "what no one tells you about slow mornings")
 - Should make the viewer want to swipe
 
-SLIDES 2+ — lifestyle imagery:
-- Provide both "label" (tip/hack text overlay) and "image_prompt" (Replicate prompt)
-- Labels must be ACTUAL TIPS OR HABITS — specific, actionable, and a full sentence (12–25 words)
-- Write labels in lowercase casual first-person voice, like a friend texting a life hack
-- Good examples: "i switched to drinking warm lemon water first thing and my digestion completely changed", "journaling for 5 minutes before touching my phone made my whole day feel different", "the 2-minute reset: step outside, breathe deep, no phone — try it when you're overwhelmed"
-- Bad examples (too short/vague): "light that doesn't rush you", "a drink that tastes like patience"
+SLIDES 2+ — imagery:
+- Provide both "label" (text overlay) and "image_prompt" (Replicate prompt)
 - NO faces or full bodies in image_prompt — avoid people entirely EXCEPT close-up hands/wrists interacting with an object or texture are allowed and encouraged
 - NO text, typography, diagrams, or infographics in image_prompt
-- Aesthetic: raw, candid, unfiltered — like a real iPhone photo or analog film shot, not a styled commercial shoot
-- Mood varies per slide: can be moody/dark with dramatic atmospheric light, cool natural daylight, warm amber evening, or overcast softness — avoid forcing every slide to be "golden hour"
-- Subjects: lean into sensory, textural moments — a hand trailing through river water, rain on a window, bare feet on wet stones, a steaming cup on a rainy windowsill, a journal page in soft overcast light, tangled earbuds on a nightstand, candle flame close-up, overgrown moss on old stone
-- Build a visual arc: hook → tip 1 → tip 2 → tip 3 → satisfying close
 
-Image prompt formula (follow this structure):
-"{Specific subject and action or texture}. {Authentic light quality — e.g. overcast diffused, amber streetlight, soft window light, harsh midday}. {Color mood — e.g. muted greens and stone grey, warm amber and shadow, cool blue-white}. {Composition detail — e.g. extreme close-up POV, low angle, slightly out of focus foreground}. Analog film grain, candid unfiltered iPhone photo aesthetic, photorealistic, no text, no people."
+LABEL FORMAT — choose based on topic type:
+
+For HABIT/TIP topics (morning routines, journaling habits, wellness practices):
+- Labels = specific, actionable tips in lowercase casual first-person (12–25 words)
+- Good examples: "i switched to drinking warm lemon water first thing and my digestion completely changed", "journaling for 5 minutes before touching my phone made my whole day feel different"
+- Bad examples (too short/vague): "light that doesn't rush you", "a drink that tastes like patience"
+- Arc: hook → tip 1 → tip 2 → tip 3 → satisfying close
+
+For CONCEPT/EDUCATION topics (CBT, stoicism, mindfulness, radical presence, science of meditation):
+Choose ONE of these formats based on what fits the concept best:
+
+FORMAT A — Teach + Apply: slide 1 hooks with the concept ("why your brain gets stuck in loops"). Slides 2–4 each unpack one insight or mechanism plainly. Last slide = a concrete practice or shift to try.
+
+FORMAT B — Reframe/Insight: each slide is one sharp, punchy insight or reframe from the concept. Written plainly — feels like a realization, not a lecture. Shareable, quotable.
+
+FORMAT C — Story arc (Problem → Insight → Shift): slide 1 names a relatable problem. Middle slides walk through the concept as the explanation/solution. Last slide = one practical shift the viewer can make today.
+
+Labels for concept slides: plain, specific, 10–22 words. Lowercase. No jargon. Reads like a clear thought, not a bullet point.
+
+VISUAL AESTHETIC:
+${profile.imageStyle}
 
 Return JSON only (no markdown fences):
 {
@@ -274,7 +296,9 @@ async function main() {
 
   // Profile selection
   const profileNames = Object.keys(PROFILES).join(', ');
-  const pInput = (await rl.question(`Profile [${profileNames}] (default: wellness): `)).trim().toLowerCase() || 'wellness';
+  const pInput = process.env.AUTO_PROFILE
+    || (await rl.question(`Profile [${profileNames}] (default: wellness): `)).trim().toLowerCase()
+    || 'wellness';
   const profile = PROFILES[pInput];
   if (!profile) {
     console.error(`Unknown profile: "${pInput}". Valid options: ${profileNames}`);
@@ -283,11 +307,12 @@ async function main() {
 
   // Topic
   const topicArg = process.argv[2];
-  const topic = topicArg || (await rl.question('Topic / description: ')).trim();
+  const topic = process.env.AUTO_TOPIC || topicArg || (await rl.question('Topic / description: ')).trim();
   if (!topic) { console.error('No topic provided.'); process.exit(1); }
 
   // Slide count
-  const countInput = (await rl.question('Slide count [3–7] (default 5): ')).trim();
+  const countInput = process.env.AUTO_SLIDE_COUNT
+    || (await rl.question('Slide count [3–7] (default 5): ')).trim();
   const slideCount = Math.min(7, Math.max(3, parseInt(countInput) || 5));
 
   // ── Steps 1–4: Caption pipeline ──
@@ -301,8 +326,13 @@ async function main() {
   const regenAnchor = process.env.REGEN_ANCHOR === '1';
   if (!existsSync(ANCHOR_PATH) || regenAnchor) {
     console.log(regenAnchor ? '  Regenerating anchor image...' : '  No cached anchor found — generating...');
-    const setting  = (await rl.question('  Setting (e.g. "beach at golden hour"): ')).trim();
-    const clothing = (await rl.question('  Clothing (e.g. "flowy white sundress"): ')).trim();
+    const autoMode = !!process.env.AUTO_SCHEDULE_HST;
+    const setting  = autoMode
+      ? (process.env.AUTO_ANCHOR_SETTING  || 'golden hour meadow with soft natural light')
+      : (await rl.question('  Setting (e.g. "beach at golden hour"): ')).trim();
+    const clothing = autoMode
+      ? (process.env.AUTO_ANCHOR_CLOTHING || 'flowy earth-toned linen dress')
+      : (await rl.question('  Clothing (e.g. "flowy white sundress"): ')).trim();
     const prompt = `Candid low-angle portrait of a young brunette woman wearing ${clothing}, ${setting}. Camera angle is from below looking upward at her. She gazes upward toward the sky with her chin lifted, side-profile or three-quarter view. Her face and shoulder fill the lower portion of the frame; sky, trees, or landscape fill the frame above her. Natural light, subtle lens flare, slightly imperfect framing. Photorealistic, candid moment.`;
     const negative_prompt = `smartphone, iphone, phone, mobile phone, device, screen, hand, arm, selfie stick, technology, gadget`;
     const predId = await replicateSubmit('ideogram-ai/ideogram-v3-quality', {
@@ -355,23 +385,29 @@ async function main() {
   console.log(`  Hashtags: ${captionData.best_hashtags.join(' ')}\n`);
   slides.forEach(s => console.log(`  Slide ${s.n}: "${s.label}"`));
   console.log(`\n  Labeled images saved to: ${tmp}`);
-  execSync(`open "${tmp}"`);
+  if (!process.env.AUTO_SCHEDULE_HST) execSync(`open "${tmp}"`);
 
   let scheduledAt = null;
-  while (true) {
-    const reply = (await rl.question('  [HH:MM to schedule in HST / no to cancel]: ')).trim().toLowerCase();
-    if (reply === 'no' || reply === 'n') {
-      console.log('Cancelled.');
-      rl.close();
-      return;
+  const autoScheduleHst = process.env.AUTO_SCHEDULE_HST;
+  if (autoScheduleHst) {
+    scheduledAt = hstToUtc(autoScheduleHst);
+    console.log(`  [AUTO] Scheduling at ${autoScheduleHst} HST → ${scheduledAt} UTC`);
+  } else {
+    while (true) {
+      const reply = (await rl.question('  [HH:MM to schedule in HST / no to cancel]: ')).trim().toLowerCase();
+      if (reply === 'no' || reply === 'n') {
+        console.log('Cancelled.');
+        rl.close();
+        return;
+      }
+      const timeMatch = reply.match(/^(\d{1,2}):(\d{2})$/);
+      if (timeMatch) {
+        scheduledAt = hstToUtc(`${timeMatch[1]}:${timeMatch[2]}`);
+        console.log(`  Scheduled: ${scheduledAt} UTC`);
+        break;
+      }
+      console.log('  Enter a time like 14:30 (HST) or "no" to cancel.');
     }
-    const timeMatch = reply.match(/^(\d{1,2}):(\d{2})$/);
-    if (timeMatch) {
-      scheduledAt = hstToUtc(`${timeMatch[1]}:${timeMatch[2]}`);
-      console.log(`  Scheduled: ${scheduledAt} UTC`);
-      break;
-    }
-    console.log('  Enter a time like 14:30 (HST) or "no" to cancel.');
   }
 
   // ── Steps 10–11: Upload + post ──
