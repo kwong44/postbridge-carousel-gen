@@ -1,5 +1,5 @@
 {
-  "post_count": 5,
+  "post_count": 6,
   "cycle": 1,
   "posts": [
     {
@@ -45,6 +45,15 @@
       "profile": "wellness",
       "scheduled_at": "2026-03-10T19:00:00.000Z",
       "created_at": "2026-03-10T05:18:27.067Z",
+      "pb_status": "scheduled"
+    },
+    {
+      "post_id": "dd051bba-3e05-4d00-b630-fa9605295932",
+      "topic": "why I was always bloated (and what finally fixed it)",
+      "category": "Gut Health & Digestion",
+      "profile": "wellness",
+      "scheduled_at": "2026-03-11T19:00:00.000Z",
+      "created_at": "2026-03-11T08:29:42.648Z",
       "pb_status": "scheduled"
     }
   ]
