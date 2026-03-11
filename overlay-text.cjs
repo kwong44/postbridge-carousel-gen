@@ -22,6 +22,9 @@ async function run() {
     process.exit(1);
   }
 
+  // Strip emoji and unsupported Unicode (keeps ASCII + basic Latin extended)
+  const sanitizedText = text.replace(/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27FF}]|[\u{FE00}-\u{FEFF}]/gu, '').trim();
+
   const imgData = fs.readFileSync(inputPath);
   const img = await loadImage(imgData);
   const { width, height } = img;
@@ -42,7 +45,7 @@ async function run() {
 
   for (let attempt = 0; attempt < 8; attempt++) {
     ctx.font = `bold ${fontSize}px ${FONT_FAMILY}`;
-    lines = wordWrap(ctx, text, maxTextWidth);
+    lines = wordWrap(ctx, sanitizedText, maxTextWidth);
     if (lines.length <= 6) break;
     fontSize = Math.round(fontSize * 0.82);
   }
