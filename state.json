@@ -1,5 +1,5 @@
 {
-  "post_count": 10,
+  "post_count": 11,
   "cycle": 1,
   "posts": [
     {
@@ -90,6 +90,15 @@
       "profile": "wellness",
       "scheduled_at": "2026-03-14T19:00:00.000Z",
       "created_at": "2026-03-14T17:32:05.434Z",
+      "pb_status": "scheduled"
+    },
+    {
+      "post_id": "3a77f47c-604e-4f4b-a10a-5748d62c503f",
+      "topic": "what I eat first thing in the morning for gut health",
+      "category": "Gut Health & Digestion",
+      "profile": "wellness",
+      "scheduled_at": "2026-03-15T19:00:00.000Z",
+      "created_at": "2026-03-15T17:33:29.808Z",
       "pb_status": "scheduled"
     }
   ]
