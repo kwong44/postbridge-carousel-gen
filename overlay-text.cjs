@@ -10,9 +10,27 @@ const path = require('path');
 
 // Register handwriting font if available
 const FONT_PATH = path.join(__dirname, 'fonts', 'Caveat-Bold.ttf');
-const FONT_FAMILY = fs.existsSync(FONT_PATH)
+const HANDWRITING_FONT = fs.existsSync(FONT_PATH)
   ? (GlobalFonts.registerFromPath(FONT_PATH, 'Caveat'), 'Caveat')
   : 'sans-serif';
+
+function getFontFamily() {
+  const style = (process.env.OVERLAY_FONT || 'handwritten').trim().toLowerCase();
+  if (style === 'sans') return 'Arial';
+  if (style === 'serif') return 'Georgia';
+  return HANDWRITING_FONT;
+}
+
+function getTextAlign() {
+  const align = (process.env.OVERLAY_ALIGN || 'center').trim().toLowerCase();
+  return ['left', 'center', 'right'].includes(align) ? align : 'center';
+}
+
+function getTextScale() {
+  const scale = Number.parseFloat(process.env.OVERLAY_SCALE || '1');
+  if (!Number.isFinite(scale)) return 1;
+  return Math.min(1.2, Math.max(0.6, scale));
+}
 
 async function run() {
   const [,, inputPath, text, outputPath] = process.argv;
@@ -31,6 +49,9 @@ async function run() {
 
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
+  const fontFamily = getFontFamily();
+  const textAlign = getTextAlign();
+  const textScale = getTextScale();
 
   // Draw the source image
   ctx.drawImage(img, 0, 0, width, height);
@@ -39,27 +60,27 @@ async function run() {
   const paddingX = Math.round(width * 0.10);
   const maxTextWidth = width - paddingX * 2;
 
-  // Start at ~7% of image width, shrink until ≤6 lines (slightly larger budget for handwriting font)
-  let fontSize = Math.round(width * 0.070);
+  // Start at ~5.5% of image width, shrink until ≤6 lines (slightly larger budget for handwriting font)
+  let fontSize = Math.round(width * 0.055 * textScale);
   let lines;
 
   for (let attempt = 0; attempt < 8; attempt++) {
-    ctx.font = `bold ${fontSize}px ${FONT_FAMILY}`;
+    ctx.font = `bold ${fontSize}px ${fontFamily}`;
     lines = wordWrap(ctx, sanitizedText, maxTextWidth);
     if (lines.length <= 6) break;
     fontSize = Math.round(fontSize * 0.82);
   }
 
-  const lineHeight = fontSize * 1.4;
+  const lineHeight = fontSize * 1.2;
   const blockH = lines.length * lineHeight;
   const startY = (height - blockH) / 2 + lineHeight / 2;
 
-  ctx.textAlign = 'center';
+  ctx.textAlign = textAlign;
   ctx.textBaseline = 'middle';
-  ctx.font = `bold ${fontSize}px ${FONT_FAMILY}`;
+  ctx.font = `bold ${fontSize}px ${fontFamily}`;
 
   for (let i = 0; i < lines.length; i++) {
-    const x = width / 2;
+    const x = textAlign === 'left' ? paddingX : textAlign === 'right' ? width - paddingX : width / 2;
     const y = startY + i * lineHeight;
 
     // Outline — stroke before fill so stroke sits behind the white fill
