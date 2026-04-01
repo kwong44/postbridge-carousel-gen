@@ -4,21 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "4d1d0cae01a40623",
+        "id": "83ea0995181d59d6",
         "type": "tabs",
         "children": [
           {
-            "id": "e7a4a7945e0f3906",
+            "id": "5bd90dd948e8e0ca",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "wellness-topics.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "wellness-topics"
+              "title": "New tab"
             }
           }
         ]
@@ -183,9 +179,9 @@
       "bases:Create new base": false
     }
   },
-  "active": "e7a4a7945e0f3906",
+  "active": "5bd90dd948e8e0ca",
   "lastOpenFiles": [
-    "commands.md",
-    "wellness-topics.md"
+    "wellness-topics.md",
+    "commands.md"
   ]
 }

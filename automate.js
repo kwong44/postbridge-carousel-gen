@@ -3,8 +3,13 @@
  * automate.js — Daily orchestrator for postbridge-pipeline
  *
  * Usage:
- *   node automate.js           # Normal run
- *   node automate.js --dry-run # Print next topic + anchor status, don't run pipeline
+ *   node automate.js                                                   # Normal run
+ *   node automate.js --dry-run                                         # Print next topic + anchor status, don't run pipeline
+ *
+ * Anchor image behavior:
+ *   - Automation regenerates slide 1's cached anchor image every N days via config.anchor_regen_every.
+ *   - Manual override:
+ *       REGEN_ANCHOR=1 node pipeline.js "what I stopped doing in the morning (and how it helped)"
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from 'node:fs';
@@ -14,14 +19,21 @@ import { dirname, join } from 'node:path';
 import { config as dotenvConfig } from 'dotenv';
 
 const ROOT       = dirname(fileURLToPath(import.meta.url));
-const CONFIG_PATH = join(ROOT, 'config.json');
-const STATE_PATH  = join(ROOT, 'state.json');
-const TOPICS_PATH = join(ROOT, 'wellness-topics.md');
+const LEGACY_CONFIG_PATH = join(ROOT, 'config.json');
+const LEGACY_STATE_PATH  = join(ROOT, 'state.json');
+const LEGACY_TOPICS_PATH = join(ROOT, 'wellness-topics.md');
 const LOGS_DIR    = join(ROOT, 'logs');
 
 dotenvConfig({ path: join(ROOT, '.env') });
 
 const isDryRun = process.argv.includes('--dry-run');
+const argv = process.argv.slice(2);
+
+function getFlagValue(flag) {
+  const index = argv.indexOf(flag);
+  if (index === -1) return null;
+  return argv[index + 1] && !argv[index + 1].startsWith('--') ? argv[index + 1] : null;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -42,6 +54,27 @@ function log(msg) {
     mkdirSync(LOGS_DIR, { recursive: true });
     appendFileSync(join(LOGS_DIR, 'auto.log'), line + '\n', 'utf8');
   } catch { /* logging is best-effort */ }
+}
+
+function daysSince(iso) {
+  if (!iso) return Infinity;
+  const ts = Date.parse(iso);
+  if (Number.isNaN(ts)) return Infinity;
+  return (Date.now() - ts) / (24 * 60 * 60 * 1000);
+}
+
+function getLegacyAnchorBaseline(state, intervalDays) {
+  if (!Array.isArray(state.posts) || state.posts.length === 0) return null;
+  if (!(intervalDays > 0)) return null;
+
+  // Older state files do not track anchor regeneration explicitly.
+  // Approximate the prior cadence by treating every Nth completed post as the last regen point.
+  const completedRegenCycles = Math.floor((state.post_count ?? 0) / intervalDays);
+  if (completedRegenCycles <= 0) return null;
+
+  const approxIndex = completedRegenCycles * intervalDays - 1;
+  const approxPost = state.posts[approxIndex];
+  return approxPost?.created_at ?? null;
 }
 
 // HST = UTC-10; convert "HH:MM" HST to UTC ISO string (bumps to next day if time has passed)
@@ -72,25 +105,58 @@ function findNextTopic(allTopics, postedTopics) {
   return allTopics.find(t => !postedSet.has(t.topic)) ?? null;
 }
 
+function resolveProfileFiles(profileArg) {
+  const requestedProfile = (profileArg || '').trim().toLowerCase();
+  const configPath = requestedProfile
+    ? join(ROOT, `config.${requestedProfile}.json`)
+    : LEGACY_CONFIG_PATH;
+
+  if (!existsSync(configPath)) {
+    if (requestedProfile === 'wellness' && existsSync(LEGACY_CONFIG_PATH)) {
+      return {
+        profile: 'wellness',
+        configPath: LEGACY_CONFIG_PATH,
+        statePath: LEGACY_STATE_PATH,
+        topicsPath: LEGACY_TOPICS_PATH,
+      };
+    }
+    throw new Error(`Missing config for profile "${requestedProfile}" — expected at ${configPath}`);
+  }
+
+  const config = readJson(configPath);
+  const resolvedProfile = (requestedProfile || config.profile || 'wellness').trim().toLowerCase();
+  const profileSpecificState = join(ROOT, `state.${resolvedProfile}.json`);
+  const profileSpecificTopics = join(ROOT, `topics.${resolvedProfile}.md`);
+
+  return {
+    profile: resolvedProfile,
+    configPath,
+    statePath: existsSync(profileSpecificState)
+      ? profileSpecificState
+      : (resolvedProfile === 'wellness' ? LEGACY_STATE_PATH : profileSpecificState),
+    topicsPath: existsSync(profileSpecificTopics)
+      ? profileSpecificTopics
+      : (resolvedProfile === 'wellness' ? LEGACY_TOPICS_PATH : profileSpecificTopics),
+  };
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  if (!existsSync(CONFIG_PATH)) {
-    console.error(`❌  Missing config.json — expected at ${CONFIG_PATH}`);
+  const profileArg = getFlagValue('--profile');
+  const { profile, configPath, statePath, topicsPath } = resolveProfileFiles(profileArg);
+
+  const config = readJson(configPath);
+  let state    = readJson(statePath, { post_count: 0, cycle: 1, posts: [] });
+
+  if (!existsSync(topicsPath)) {
+    log(`ERROR: Topics file not found for profile "${profile}" at ${topicsPath}`);
     process.exit(1);
   }
 
-  const config = readJson(CONFIG_PATH);
-  let state    = readJson(STATE_PATH, { post_count: 0, cycle: 1, posts: [] });
-
-  if (!existsSync(TOPICS_PATH)) {
-    log('ERROR: wellness-topics.md not found');
-    process.exit(1);
-  }
-
-  const allTopics = parseTopics(readFileSync(TOPICS_PATH, 'utf8'));
+  const allTopics = parseTopics(readFileSync(topicsPath, 'utf8'));
   if (allTopics.length === 0) {
-    log('ERROR: No topics found in wellness-topics.md');
+    log(`ERROR: No topics found in ${topicsPath}`);
     process.exit(1);
   }
 
@@ -98,32 +164,44 @@ async function main() {
   if (!nextTopic) {
     log(`All ${allTopics.length} topics cycled — starting new cycle ${state.cycle + 1}`);
     state = { ...state, cycle: state.cycle + 1, posts: [] };
-    writeJson(STATE_PATH, state);
+    writeJson(statePath, state);
     nextTopic = allTopics[0];
   }
 
-  const shouldRegenAnchor = config.anchor_regen_every > 0
-    && state.post_count > 0
-    && state.post_count % config.anchor_regen_every === 0;
+  const anchorRegenEveryDays = Number(config.anchor_regen_every) || 0;
+  const lastAnchorRegeneratedAt = state.last_anchor_regenerated_at
+    ?? getLegacyAnchorBaseline(state, anchorRegenEveryDays);
+  const anchorAgeDays = daysSince(lastAnchorRegeneratedAt);
+  const shouldRegenAnchor = anchorRegenEveryDays > 0 && anchorAgeDays >= anchorRegenEveryDays;
 
+  log(`Profile: ${profile}`);
+  log(`Config: ${configPath}`);
+  log(`State: ${statePath}`);
+  log(`Topics: ${topicsPath}`);
   log(`Next topic: "${nextTopic.topic}" (${nextTopic.category})`);
   log(`Post count: ${state.post_count} | Cycle: ${state.cycle}`);
-  log(`Anchor regen: ${shouldRegenAnchor ? 'YES' : 'no'}`);
+  log(`Anchor regen cadence: every ${anchorRegenEveryDays} day(s)`);
+  log(`Last anchor regen: ${lastAnchorRegeneratedAt ?? 'unknown'} | age: ${Number.isFinite(anchorAgeDays) ? anchorAgeDays.toFixed(2) : 'unknown'} day(s)`);
+  log(`Anchor regen this run: ${shouldRegenAnchor ? 'YES' : 'no'}`);
 
   if (isDryRun) {
     console.log('\n[DRY RUN] Would run pipeline with:');
-    console.log(`  AUTO_PROFILE      = ${config.profile}`);
+    console.log(`  AUTO_PROFILE      = ${profile}`);
     console.log(`  AUTO_TOPIC        = "${nextTopic.topic}"`);
     console.log(`  AUTO_SLIDE_COUNT  = ${config.slide_count}`);
     console.log(`  AUTO_SCHEDULE_HST = ${config.post_time_hst}`);
+    console.log(`  LAST_ANCHOR_REGEN = ${lastAnchorRegeneratedAt ?? 'unknown'}`);
     console.log(`  REGEN_ANCHOR      = ${shouldRegenAnchor ? '1' : '0'}`);
+    console.log(`  CONFIG_PATH       = ${configPath}`);
+    console.log(`  STATE_PATH        = ${statePath}`);
+    console.log(`  TOPICS_PATH       = ${topicsPath}`);
     return;
   }
 
   // ── Spawn pipeline.js ────────────────────────────────────────────────────────
   const env = {
     ...process.env,
-    AUTO_PROFILE:      config.profile,
+    AUTO_PROFILE:      profile,
     AUTO_TOPIC:        nextTopic.topic,
     AUTO_SLIDE_COUNT:  String(config.slide_count),
     AUTO_SCHEDULE_HST: config.post_time_hst,
@@ -146,20 +224,28 @@ async function main() {
   // Parse post ID from pipeline output
   const idMatch = captured.match(/✅ Post created — ID: (\S+)/);
   const postId  = idMatch ? idMatch[1] : null;
-  if (!postId) log('WARN: Could not parse post_id from pipeline output');
+  if (!postId) {
+    log('ERROR: Could not parse post_id from pipeline output — state NOT advanced');
+    process.exit(1);
+  }
 
   // Advance state
   state.posts.push({
     post_id:      postId,
     topic:        nextTopic.topic,
     category:     nextTopic.category,
-    profile:      config.profile,
+    profile,
     scheduled_at: hstToUtc(config.post_time_hst),
     created_at:   new Date().toISOString(),
     pb_status:    'scheduled',
   });
   state.post_count = (state.post_count ?? 0) + 1;
-  writeJson(STATE_PATH, state);
+  if (shouldRegenAnchor) {
+    state.last_anchor_regenerated_at = new Date().toISOString();
+  } else if (!state.last_anchor_regenerated_at && lastAnchorRegeneratedAt) {
+    state.last_anchor_regenerated_at = lastAnchorRegeneratedAt;
+  }
+  writeJson(statePath, state);
 
   log(`SUCCESS: post_id=${postId ?? 'unknown'} topic="${nextTopic.topic}"`);
 }
