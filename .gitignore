@@ -7,4 +7,5 @@ media/*
 !media/anchor_girl.jpg
 analytics.json
 logs/
+runs/
 tiktok-analytics.csv

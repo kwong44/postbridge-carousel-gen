@@ -531,7 +531,7 @@ async function main() {
   console.log('\n🎠  PostBridge Carousel Pipeline\n');
 
   mkdirSync(join(ROOT, 'media'), { recursive: true });
-  const tmp = join('/tmp', `carousel-${Date.now()}`);
+  const tmp = join(ROOT, 'runs', `carousel-${Date.now()}`);
   mkdirSync(tmp, { recursive: true });
   const positionalArgs = getPositionalArgs();
   const anchorOnly = hasFlag('--anchor-only');

@@ -56,8 +56,8 @@ async function run() {
   // Draw the source image
   ctx.drawImage(img, 0, 0, width, height);
 
-  // 10% horizontal padding on each side — text stays well inside the frame
-  const paddingX = Math.round(width * 0.10);
+  // 15% horizontal padding on each side — text stays well inside the frame
+  const paddingX = Math.round(width * 0.15);
   const maxTextWidth = width - paddingX * 2;
 
   // Start at ~5.5% of image width, shrink until ≤6 lines (slightly larger budget for handwriting font)
