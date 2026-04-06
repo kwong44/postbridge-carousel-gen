@@ -27,7 +27,7 @@ const ROOT            = dirname(fileURLToPath(import.meta.url));
 const REPLICATE_TOKEN       = process.env.REPLICATE_API_KEY;
 const POSTBRIDGE_KEY        = process.env.POSTBRIDGE_API_KEY;
 const OPENROUTER_KEY        = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_MODEL      = process.env.OPENROUTER_MODEL || 'minimax/minimax-m2.5';
+const OPENROUTER_MODEL      = process.env.OPENROUTER_MODEL || 'qwen/qwen3-235b-a22b-2507';
 const OVERLAY_SCRIPT        = join(ROOT, 'overlay-text.cjs');
 const LEGACY_RUNS_LOG       = join(ROOT, 'logs', 'runs.jsonl');
 const LEGACY_WELLNESS_ANCHOR = join(ROOT, 'media', 'anchor_girl.jpg');
@@ -73,18 +73,20 @@ Image prompt formula: "{Specific subject and action or texture}. {Authentic ligh
     slide1LabelInstruction: 'Label MUST start with "POV:" followed by a short immersive second-person hook. Total length: 5–12 words including "POV:". Make the viewer feel seen — like you\'re naming something they\'ve lived but never said. e.g. "POV: you finally said the thing you\'ve been holding in for years", "POV: you just heard your own voice say the truth", "POV: you stopped pretending everything was fine"',
     negativePrompt: 'full face, direct eye contact, selfie, influencer pose, phone UI, app screenshot, visible text, logo, watermark, neon colors, clutter, collage, multiple subjects, stock photo look',
     overlayStyle: { font: 'sans', align: 'center', scale: 0.82 },
-    imageStyle: `Quiet cinematic realism with emotional tension, not generic wellness stock. The world can move between natural, interior, architectural, and tactile object spaces as long as it stays grounded, photoreal, and introspective.
+    imageStyle: `Aspirational wellness realism that stops the scroll immediately. Images should feel beautiful, emotionally legible, and uplifting without becoming cheesy or fake. Prioritize scenic, expansive, healing imagery that feels relatable to meditation, voice journaling, inner clarity, and personal growth.
 
-Color mood: deep grey-green, smoke, muted stone, shadowed amber, washed concrete, soft sage, desaturated blue-grey — no bright or sugary color. Light: overcast diffused light, weak window light, sodium street spill, dim hallway light, soft dawn haze, shadowed practical light. Composition: asymmetrical framing, negative space, foreground obstruction, threshold moments, close tactile detail, or low-angle spatial depth.
+Preferred subjects: glowing horizons, ocean overlooks, mountain paths, wildflower fields, cliff edges, sunrise or sunset skies, reflective water at golden hour, open roads, warm interiors connected to nature, simple wellness rituals, and distant or partial human presence that suggests release, relief, or becoming.
 
-Image prompt formula: "{One unresolved cinematic scene built around a single dominant subject}. {Light quality and palette}. {Composition with depth, asymmetry, or obstruction}. Photorealistic, cinematic editorial image, no text, no logos."`,
+Color mood: golden amber, peach light, sea glass blue, warm sand, soft green, clean sky blue, sunlit neutral stone. Light: sunrise glow, sunset backlight, clean daylight, golden-hour rim light, luminous overcast brightness. Composition: bold focal subject, scenic depth, emotional scale, wind or motion when helpful, generous negative space, and immediately readable beauty.
+
+Image prompt formula: "{One emotionally striking wellness scene built around a single dominant subject}. {Beautiful natural light and uplifting color}. {Cinematic composition with depth, motion, or scale}. Photorealistic, cinematic editorial image, no text, no logos."`,
     visualMotifFamilies: [
-      'interior threshold: doorway edges, windows, curtains, bedsides, empty chairs, paused domestic spaces, the feeling of almost entering or leaving',
-      'architectural liminality: hallways, stairwells, corners, concrete, glass reflections, shadowed rooms, spatial isolation without people dominating',
-      'tactile object tension: journals, cups, lamps, tangled cords, wrinkled linen, keys, mirrors, audio objects, ordinary objects charged with emotional weight',
-      'partial body presence: hands, wrists, shoulders, silhouettes, body fragments interacting with space or objects, never a full face or full body',
-      'elemental nature metaphor: fog, water, leaves, stones, roots, condensation, rain, but only when used as metaphor rather than default filler',
-      'urban night residue: wet pavement, window reflections, parked car interiors, streetlight spill, transit textures, late-night stillness, aftermath energy',
+      'expansive landscape release: coastlines, overlooks, mountains, valleys, open roads, sweeping skies, and the feeling of exhaling into something bigger',
+      'sunset horizon emotion: glowing sunsets, sunrises, horizon lines, clouds lit from behind, open water, desert light, and emotionally resonant sky color',
+      'triumphant path or summit: trails, ridgelines, steps toward a viewpoint, reaching higher ground, breakthrough motion, and grounded victory',
+      'calm reflective nature: still water, wind through grass, trees in warm light, flowers, natural textures, and peaceful clarity without cliché zen props',
+      'partial or distant human presence: silhouettes, backs, distant figures, hands, shoulders, or body fragments interacting with beautiful environments, never a full face or full body',
+      'tactile wellness ritual: journals, tea, bare feet on stone, sunlit curtains, voice notes, blankets, windows, and objects that feel warm, lived-in, and hopeful',
     ],
   },
 };
@@ -270,26 +272,51 @@ function cleanAnchorPrompt(text) {
     .trim();
 }
 
-function pickCarouselVisualDirection() {
-  const aestheticModes = [
-    'cinematic elemental surreal',
-    'digital psyche inner mindscape',
-    'brutal minimal high contrast',
-    'soft dream memory haze',
-    'absurd surreal contrast',
-    'emotional nature metaphor',
-    'time distortion loop',
-    'tactile macro realism',
-    'liminal architectural isolation',
-  ];
+function getVisualDirectionPool(profileName, profile) {
+  if (profileName === 'upgrades' || profile?.niche?.includes('Voice journaling')) {
+    return {
+      aestheticModes: [
+        'golden-hour release',
+        'expansive horizon clarity',
+        'nature-led transformation',
+        'quiet triumph',
+        'reflective warmth',
+        'luminous scenic uplift',
+      ],
+      tensionTypes: [
+        'release',
+        'breakthrough',
+        'arrival',
+        'self-trust',
+        'becoming',
+      ],
+    };
+  }
 
-  const tensionTypes = [
-    'contradiction',
-    'disappearance',
-    'threshold',
-    'aftermath',
-    'transformation',
-  ];
+  return {
+    aestheticModes: [
+      'cinematic elemental surreal',
+      'digital psyche inner mindscape',
+      'brutal minimal high contrast',
+      'soft dream memory haze',
+      'absurd surreal contrast',
+      'emotional nature metaphor',
+      'time distortion loop',
+      'tactile macro realism',
+      'liminal architectural isolation',
+    ],
+    tensionTypes: [
+      'contradiction',
+      'disappearance',
+      'threshold',
+      'aftermath',
+      'transformation',
+    ],
+  };
+}
+
+function pickCarouselVisualDirection(profileName = null, profile = null) {
+  const { aestheticModes, tensionTypes } = getVisualDirectionPool(profileName, profile);
 
   return {
     selectedAesthetic: aestheticModes[Math.floor(Math.random() * aestheticModes.length)],
@@ -325,72 +352,72 @@ function formatMotifFamilies(families) {
 function getMotifFamilyPromptGuidance(motifFamily) {
   const family = (motifFamily || '').toLowerCase();
 
-  if (family.includes('interior threshold')) {
+  if (family.includes('expansive landscape release')) {
     return {
-      focus: 'paused domestic thresholds such as windows, curtains, bedsides, empty chairs, doorframes, or tables in a room that feels almost entered or almost left',
-      light: 'weak window light, soft dawn haze, or low practical room light',
-      palette: 'washed cream, faded wood, shadowed amber, soft grey-blue, muted sage',
-      composition: 'asymmetrical framing with threshold depth, negative space, and foreground obstruction',
-      hardAvoids: 'No hands, wrists, body fragments, water surfaces, stones, moss, leaves, or forest-floor imagery',
+      focus: 'sweeping coastlines, overlooks, mountain valleys, cliff edges, open roads, or broad natural spaces that feel like emotional exhale and freedom',
+      light: 'sunrise glow, sunset backlight, luminous clean daylight, or warm high-altitude light',
+      palette: 'golden amber, sky blue, sea glass, warm stone, soft green, and sunlit neutrals',
+      composition: 'bold scenic scale with one dominant focal subject, strong horizon or depth line, and instantly readable beauty',
+      hardAvoids: 'No bleak interiors, concrete hallways, parked car scenes, urban grime, or tiny low-impact subjects swallowed by dull empty space',
     };
   }
 
-  if (family.includes('architectural liminality')) {
+  if (family.includes('sunset horizon emotion')) {
     return {
-      focus: 'hallways, stairwells, corners, concrete, glass reflections, doors, rails, shadowed rooms, or empty spatial transitions',
-      light: 'dim corridor light, window spill, overcast architectural daylight, or sodium-vapor residue',
-      palette: 'washed concrete, blue-grey, smoke, muted charcoal, pale green-grey',
-      composition: 'low-angle spatial depth, vanishing lines, partial obstruction, and strong negative space',
-      hardAvoids: 'No hands, wrists, visible people, water surfaces, moss, stones, leaves, or obvious nature close-ups',
+      focus: 'sunsets, sunrises, glowing cloud banks, horizon lines, open water, desert skies, or sky-dominant scenes that carry emotional warmth and hope',
+      light: 'golden-hour flare, backlit clouds, soft radiant dusk, or crisp early-morning light',
+      palette: 'peach, amber, coral, warm blue, lavender-grey, and luminous sand tones',
+      composition: 'one dominant horizon-led image with strong sky presence, emotional color, and clean cinematic depth',
+      hardAvoids: 'No noir mood, heavy shadow dominance, muddy grey palettes, urban night residue, or cluttered foreground objects',
     };
   }
 
-  if (family.includes('tactile object tension')) {
+  if (family.includes('triumphant path or summit')) {
     return {
-      focus: 'ordinary emotionally charged objects such as a journal, lamp, cup, tangled cord, keys, mirror, notebook, recorder, or wrinkled linen',
-      light: 'single-source practical light, dim window light, soft dawn, or warm late-night spill',
-      palette: 'faded wood, paper cream, smoke, shadowed amber, desaturated blue-grey',
-      composition: 'tight editorial framing around one object with layered depth and unresolved tension',
-      hardAvoids: 'No hands, wrists, body fragments, water surfaces, moss, leaves, stones, or forest textures',
+      focus: 'a trail, ridgeline, steps, a summit edge, a winding path, or a viewpoint that suggests progress, breakthrough, and grounded victory',
+      light: 'clear sunrise, triumphant sunset, bright mountain air, or warm directional light',
+      palette: 'warm stone, sunlit earth, amber sky, clear blue, and energized natural color',
+      composition: 'forward-moving lines, scenic depth, elevated perspective, and a sense of upward momentum',
+      hardAvoids: 'No empty room tension, noir restraint, urban decay, or static tabletop still lifes',
     };
   }
 
-  if (family.includes('partial body presence')) {
+  if (family.includes('calm reflective nature')) {
     return {
-      focus: 'a single body fragment such as a hand, wrist, shoulder, neck edge, or silhouette interacting with space or an object',
-      light: 'soft window light, dim room light, dawn haze, or moody side light',
-      palette: 'skin against washed wood, smoke, soft sage, muted blue-grey, shadowed amber',
-      composition: 'one cropped gesture with strong negative space and a clear environmental relationship',
-      hardAvoids: 'No full face, no full body, no selfie, no influencer pose, no water-hand tropes, and no generic reaching gesture without environmental tension',
+      focus: 'still water, wind through tall grass, flowers, trees in warm light, gentle waves, or natural textures that feel calming, clear, and alive',
+      light: 'golden-hour softness, luminous overcast brightness, clean morning light, or reflective sunset glow',
+      palette: 'soft green, sky blue, warm gold, sand, sea glass, and fresh neutral tones',
+      composition: 'one emotionally legible natural subject with softness, motion, and serene cinematic depth',
+      hardAvoids: 'No stacked stones, generic spa props, muddy darkness, or repetitive close-up moss-and-rock filler',
     };
   }
 
-  if (family.includes('elemental nature metaphor')) {
+  if (family.includes('partial or distant human presence')) {
     return {
-      focus: 'one natural scene used as metaphor, such as condensation, fog, roots, rain, branches, leaf shadow, ripples, or weathered surfaces',
-      light: 'overcast daylight, post-rain softness, diffuse mist light, or pale dawn',
-      palette: 'stone, fog, muted green, washed brown, soft silver-grey',
-      composition: 'one natural subject with asymmetry, depth, and emotional ambiguity',
-      hardAvoids: 'No hands, wrists, people, literal meditation props, stacked stones, or repetitive moss-rock-water close-up formulas',
+      focus: 'a distant figure, back view, cropped shoulder, hand, or silhouette interacting with a beautiful environment in a way that feels relatable, healing, and emotionally open',
+      light: 'sunset rim light, sunrise glow, clean daylight, or warm window light connected to nature',
+      palette: 'sunlit skin tones, warm neutrals, sky blue, peach, soft green, and luminous amber',
+      composition: 'human presence should support the environment, with strong scenic context, emotional clarity, and no direct face-forward portrait framing',
+      hardAvoids: 'No full face, no full body, no selfie framing, no influencer pose, no gym-style triumph clichés, and no body fragment floating without a clear environment',
     };
   }
 
-  if (family.includes('urban night residue')) {
+  if (family.includes('tactile wellness ritual')) {
     return {
-      focus: 'wet pavement, transit textures, parked car interiors, window reflections, streetlight spill, concrete residue, or late-night stillness',
-      light: 'streetlight spill, sodium haze, cool storefront reflection, or weak parking-lot light',
-      palette: 'petrol blue, wet asphalt grey, amber sodium, smoke, muted green-black',
-      composition: 'editorial framing with reflections, distance, obstruction, and aftermath energy',
-      hardAvoids: 'No hands, wrists, faces, obvious nature textures, moss, leaves, or calm-water imagery',
+      focus: 'a journal, tea, blanket, open window, voice note moment, bare feet on warm stone, or another lived-in ritual object that feels restorative and hopeful',
+      light: 'sunlit window glow, golden-hour spill, soft morning brightness, or warm natural light',
+      palette: 'paper cream, warm sand, honey light, soft green, pale sky blue, and natural wood',
+      composition: 'tight but inviting editorial framing around one tactile ritual scene with warmth, beauty, and emotional immediacy',
+      hardAvoids: 'No dim lonely interiors, tangled-cord melancholy, harsh clutter, generic desk flat lays, or cold tech-first object scenes',
     };
   }
 
   return {
-    focus: 'one unresolved cinematic scene built around a single dominant subject',
-    light: 'soft natural or practical light',
-    palette: 'muted editorial tones with no bright saturated color',
-    composition: 'asymmetry, negative space, and layered depth',
-    hardAvoids: 'No hands unless explicitly required, and no default moss, leaf, stone, or water imagery',
+    focus: 'one emotionally striking wellness scene built around a single dominant subject',
+    light: 'beautiful natural light with uplift and clarity',
+    palette: 'luminous editorial color with warmth and clean contrast',
+    composition: 'cinematic scenic depth, emotional readability, and strong focal framing',
+    hardAvoids: 'No bleak noir interiors, no dull low-contrast filler, and no default urban residue imagery',
   };
 }
 
@@ -409,12 +436,21 @@ function inspectImagePrompt(text, motifFamily = null) {
   }
 
   const family = (motifFamily || '').toLowerCase();
-  if (!family.includes('partial body presence') && /\bhand\b|\bhands\b|\bwrist\b|\bforearm\b|\bfingers?\b|\bshoulder\b|\bsilhouette\b/.test(normalized)) {
-    violations.push('uses body-fragment language outside partial body presence motif');
+  if (!family.includes('partial or distant human presence') && /\bhand\b|\bhands\b|\bwrist\b|\bforearm\b|\bfingers?\b|\bshoulder\b|\bsilhouette\b/.test(normalized)) {
+    violations.push('uses body-fragment language outside partial or distant human presence motif');
   }
 
-  if (!family.includes('elemental nature metaphor') && /\bwater\b|\bripple\b|\bripples\b|\bstone\b|\bstones\b|\bmoss\b|\bleaf\b|\bleaves\b|\broot\b|\broots\b|\bfog\b|\bmist\b|\bforest\b/.test(normalized)) {
-    violations.push('uses elemental nature language outside elemental nature metaphor motif');
+  const allowsNatureLanguage = [
+    'expansive landscape release',
+    'sunset horizon emotion',
+    'triumphant path or summit',
+    'calm reflective nature',
+    'partial or distant human presence',
+    'tactile wellness ritual',
+  ].some(name => family.includes(name));
+
+  if (!allowsNatureLanguage && /\bwater\b|\bripple\b|\bripples\b|\bstone\b|\bstones\b|\bmoss\b|\bleaf\b|\bleaves\b|\broot\b|\broots\b|\bfog\b|\bmist\b|\bforest\b/.test(normalized)) {
+    violations.push('uses nature language outside approved scenic wellness motifs');
   }
 
   return {
@@ -434,7 +470,7 @@ async function repairImagePrompt({
   visualDirection,
   type,
 }) {
-  const { selectedAesthetic, selectedTension } = visualDirection ?? pickCarouselVisualDirection();
+  const { selectedAesthetic, selectedTension } = visualDirection ?? pickCarouselVisualDirection(null, profile);
   const motifGuidance = getMotifFamilyPromptGuidance(motifFamily);
   const prompt = await llmCall(`Rewrite this ${type} image-generation prompt so it obeys all constraints while preserving the original creative idea as much as possible.
 
@@ -455,6 +491,7 @@ Hard rules:
 - No full face, selfie, influencer portrait, direct eye contact, or full body
 - Keep it photorealistic and cinematic, not a graphic design concept
 - Preserve the same carousel visual world and emotional tension
+- Keep the result scroll-stopping, beautiful, emotionally legible, and wellness-adjacent rather than obscure, gloomy, or overly abstract
 - If human presence is used, keep it partial or obscured
 ${motifGuidance.hardAvoids ? `- ${motifGuidance.hardAvoids}` : ''}
 
@@ -469,7 +506,7 @@ async function generateAnchorPrompt({ profileName, profile, topic, hook, recentA
     ? 'No recent anchor history.'
     : recentAnchors.map((entry, index) => `${index + 1}. topic="${entry.topic}" | hook="${entry.slide_1_label ?? 'unknown'}" | prompt="${entry.anchor_prompt ?? 'unknown'}"`).join('\n');
 
-  const { selectedAesthetic, selectedTension } = visualDirection ?? pickCarouselVisualDirection();
+  const { selectedAesthetic, selectedTension } = visualDirection ?? pickCarouselVisualDirection(profileName, profile);
 
   const prompt = await llmCall(`Write one image-generation prompt for a TikTok carousel anchor image.
 
@@ -479,7 +516,7 @@ Goal:
 - Make the viewer feel something before they fully understand it
 - Fit a voice journaling / meditation app brand
 - Feel like a frozen moment from a film, not a designed graphic
-- Create a thought-provoking unresolved moment, not just a pretty wellness scene
+- Create a beautiful, emotionally moving wellness image that still has curiosity and tension
 
 Brand:
 - Profile: ${profileName}
@@ -508,7 +545,7 @@ Scroll Psychology:
 - The image must create an unresolved moment
 - It should feel like something just happened or is about to happen
 - The viewer should feel curious, slightly emotionally pulled, or intrigued within one second
-- Prioritize curiosity over clarity
+- Prioritize beauty plus emotion first, then curiosity
 
 Composition:
 - Prefer asymmetry, negative space, and layered depth
@@ -517,14 +554,15 @@ Composition:
 Visual Strategy:
 - Apply the aesthetic mode as the primary visual language
 - Build the image around one visual tension
-- Prefer unusual scale, threshold moments, obstruction, implied motion, aftermath, emotional ambiguity, or environmental tension
-- Favor scenes that feel like a frame from a film, not a calming wallpaper
-- Do not default to dark water or wet stone unless they genuinely fit the concept
+- Favor scenic beauty, emotional release, expansiveness, natural grandeur, or healing momentum
+- Let the frame feel like a film still, but also like something a wellness viewer would want to save or send
+- Prefer sunsets, horizons, landscapes, warm interiors connected to nature, and partial or distant human presence over dim symbolic object scenes
 
 Hard Avoids:
 - No phone screens, fake app UI, logos, or visible text
 - No generic desk still lifes, flat lays, beige wellness stock imagery, low-contrast compositions, centered object-only still lifes, or cliché zen imagery
 - No stacked stones
+- No empty concrete hallways, parked car interiors, urban residue noir, or bleak dim-room melancholy
 - No simple hand-holding-object-in-water image unless paired with a distinctly unusual second element
 
 Finish:
@@ -544,7 +582,7 @@ async function generateSlideImagePrompt({
   motifFamily,
   visualDirection,
 }) {
-  const { selectedAesthetic, selectedTension } = visualDirection ?? pickCarouselVisualDirection();
+  const { selectedAesthetic, selectedTension } = visualDirection ?? pickCarouselVisualDirection(null, profile);
   const motifGuidance = getMotifFamilyPromptGuidance(motifFamily);
   const prompt = await llmCall(`Write one image-generation prompt for slide ${slideNumber} of a TikTok carousel.
 
@@ -567,14 +605,16 @@ Scene guidance:
 
 Requirements:
 - Return ONLY the final prompt string
-- Create one unresolved cinematic moment that supports the slide label without illustrating it literally
+- Create one emotionally striking, scroll-stopping wellness image that supports the slide label without illustrating it literally
 - One dominant focal subject
 - Photorealistic and cinematic, not a graphic design concept
-- Partial human presence is allowed only if the motif family is "partial body presence"
-- If the motif family is not "partial body presence", do not use hands, wrists, shoulders, silhouettes, or any visible body fragment
+- Partial human presence is allowed only if the motif family is "partial or distant human presence"
+- If the motif family is not "partial or distant human presence", do not use hands, wrists, shoulders, silhouettes, or any visible body fragment
 - No full face, no full body, no influencer portrait
-- Do not use water, stones, moss, leaves, roots, mist, or forest textures unless the motif family is "elemental nature metaphor"
+- Do not use hands, wrists, shoulders, silhouettes, or any visible body fragment unless the motif family is "partial or distant human presence"
 - No phone screens, app UI, logos, or visible text
+- Prioritize beautiful light, scenic depth, emotional clarity, and wellness relatability over dark symbolism
+- The image should feel save-worthy or share-worthy on TikTok within one second
 - ${motifGuidance.hardAvoids}
 
 End with: "photorealistic, cinematic editorial composition"
@@ -1056,7 +1096,7 @@ async function main() {
   const captionData = await runCaptionPipeline(profile, topic);
 
   // ── Step 6: Slide planning ──
-  const visualDirection = pickCarouselVisualDirection();
+  const visualDirection = pickCarouselVisualDirection(pInput, profile);
   const slides = await planSlidesForProfile(pInput, captionData, profile, slideCount, visualDirection);
 
   // ── Step 6.5: Anchor image ──
