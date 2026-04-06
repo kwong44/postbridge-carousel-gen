@@ -5,10 +5,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Running the Pipeline
 
 ```bash
-node pipeline.js                    # Interactive mode (prompts for profile, topic, slide count)
-node pipeline.js "your topic here"  # Pass topic as CLI argument
-REGEN_ANCHOR=1 node pipeline.js     # Force regenerate cached anchor image
-npm start                           # Equivalent to node pipeline.js
+node pipeline.js                                              # Interactive mode (prompts for profile, topic, slide count)
+node pipeline.js "your topic here"                            # Pass topic as CLI argument
+node pipeline.js --profile upgrades "your topic here"        # Specify profile directly
+REGEN_ANCHOR=1 node pipeline.js                              # Force regenerate cached anchor image
+REGEN_ANCHOR=1 node pipeline.js --anchor-only --profile upgrades "topic"  # Regenerate anchor only, skip carousel
+npm start                                                     # Equivalent to node pipeline.js
+
+node automate.js                    # Daily orchestrator: picks next topic from queue, runs pipeline
+node automate.js --dry-run          # Print next topic + anchor status, don't run pipeline
+
+node analytics.js sync              # Sync PostBridge status + merge TikTok CSV if present
+node analytics.js report            # Category performance report
+node analytics.js generate-topics   # LLM-generate topics from top-performing categories
 ```
 
 No build step, test suite, or linter is configured.

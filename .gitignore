@@ -4,7 +4,6 @@ media/*
 /tmp/
 # state.json and media/anchor_girl.jpg are tracked so GitHub Actions can persist
 # topic rotation state and the cached anchor image across runs
-!media/anchor_girl.jpg
 analytics.json
 logs/
 runs/
