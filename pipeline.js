@@ -252,18 +252,48 @@ function cleanAnchorPrompt(text) {
     .trim();
 }
 
-async function generateAnchorPrompt({ profileName, profile, topic, hook, recentAnchors }) {
+function pickCarouselVisualDirection() {
+  const aestheticModes = [
+    'cinematic elemental surreal',
+    'digital psyche inner mindscape',
+    'brutal minimal high contrast',
+    'soft dream memory haze',
+    'absurd surreal contrast',
+    'emotional nature metaphor',
+    'time distortion loop',
+    'tactile macro realism',
+    'liminal architectural isolation',
+  ];
+
+  const tensionTypes = [
+    'contradiction',
+    'disappearance',
+    'threshold',
+    'aftermath',
+    'transformation',
+  ];
+
+  return {
+    selectedAesthetic: aestheticModes[Math.floor(Math.random() * aestheticModes.length)],
+    selectedTension: tensionTypes[Math.floor(Math.random() * tensionTypes.length)],
+  };
+}
+
+async function generateAnchorPrompt({ profileName, profile, topic, hook, recentAnchors, visualDirection }) {
   const historyBlock = recentAnchors.length === 0
     ? 'No recent anchor history.'
     : recentAnchors.map((entry, index) => `${index + 1}. topic="${entry.topic}" | hook="${entry.slide_1_label ?? 'unknown'}" | prompt="${entry.anchor_prompt ?? 'unknown'}"`).join('\n');
 
+  const { selectedAesthetic, selectedTension } = visualDirection ?? pickCarouselVisualDirection();
+
   const prompt = await llmCall(`Write one image-generation prompt for a TikTok carousel anchor image.
 
 Goal:
-- Stop the scroll instantly
-- Make the viewer curious enough to swipe
-- Fit a meditation / journaling app brand
-- Feel cinematic, elemental, surreal, and emotionally loaded
+- Stop the scroll instantly (this is the primary job)
+- Create immediate curiosity so the viewer wants to swipe
+- Make the viewer feel something before they fully understand it
+- Fit a voice journaling / meditation app brand
+- Feel like a frozen moment from a film, not a designed graphic
 - Create a thought-provoking unresolved moment, not just a pretty wellness scene
 
 Brand:
@@ -279,26 +309,41 @@ Current post:
 Recent anchor history to avoid repeating:
 ${historyBlock}
 
-Rules:
-- Return the prompt only
+Creative Direction:
+- Aesthetic mode: ${selectedAesthetic}
+- Core visual tension: ${selectedTension}
+
+Core Rules:
+- Return ONLY the final prompt string
 - One dominant focal subject
-- Topic-relevant, but not literal or cheesy
-- Build the image around one visual tension:
-  1. contradiction
-  2. disappearance
-  3. threshold
-  4. aftermath
-  5. transformation
-- Elemental surreal visual language: dark water, wet stone, rain, mist, submerged objects, partial human presence, strong tactile textures, cinematic tension
-- Partial human presence is allowed and encouraged, but no full face and no influencer portrait
-- No phone screens, no fake app UI, no logos, no visible text
-- Avoid generic desk still lifes, flat lays, beige wellness stock imagery, low-contrast compositions, centered object-only still lifes, zen cliches, stacked stones, and a single hand holding an object in water unless the scene has a more unusual second element
-- Prefer asymmetry, negative space, foreground obstruction, implied motion, unusual scale, mystery, and emotional ambiguity
-- The image should make the viewer ask a question within one second
-- Favor compositions that feel like a scene from a film, not a calming wallpaper
-- If using a hand or body fragment, pair it with an unexpected environment or object relationship rather than a simple product gesture
-- Use square composition
-- End with a concise visual finish like "photorealistic, cinematic editorial composition, square composition"
+- Topic-relevant, but not literal, cheesy, or overly explanatory
+- Build around one clear visual idea, not multiple competing ideas
+
+Scroll Psychology:
+- The image must create an unresolved moment
+- It should feel like something just happened or is about to happen
+- The viewer should feel curious, slightly emotionally pulled, or intrigued within one second
+- Prioritize curiosity over clarity
+
+Composition:
+- Prefer asymmetry, negative space, and layered depth
+- Use foreground / midground / background separation when helpful
+
+Visual Strategy:
+- Apply the aesthetic mode as the primary visual language
+- Build the image around one visual tension
+- Prefer unusual scale, threshold moments, obstruction, implied motion, aftermath, emotional ambiguity, or environmental tension
+- Favor scenes that feel like a frame from a film, not a calming wallpaper
+- Do not default to dark water or wet stone unless they genuinely fit the concept
+
+Hard Avoids:
+- No phone screens, fake app UI, logos, or visible text
+- No generic desk still lifes, flat lays, beige wellness stock imagery, low-contrast compositions, centered object-only still lifes, or cliché zen imagery
+- No stacked stones
+- No simple hand-holding-object-in-water image unless paired with a distinctly unusual second element
+
+Finish:
+- End with exactly: "photorealistic, cinematic editorial composition, square composition"
 
 Write a single polished prompt string that can be sent directly to an image model.`);
 
@@ -465,8 +510,9 @@ ${captionSchema}`, captionSchema);
 
 // ─── LLM: Slide planning (Step 6) ────────────────────────────────────────────
 
-async function planSlides(captionData, profile, count) {
+async function planSlides(captionData, profile, count, visualDirection) {
   header(6, `Slide planning (${count} slides)`);
+  const { selectedAesthetic, selectedTension } = visualDirection ?? pickCarouselVisualDirection();
 
   const slidesSchema = `{
   "slides": [
@@ -492,7 +538,14 @@ SLIDES 2+ — imagery:
 - Provide both "label" (text overlay) and "image_prompt" (Replicate prompt)
 - NO faces or full bodies in image_prompt — avoid people entirely EXCEPT close-up hands/wrists interacting with an object or texture are allowed and encouraged
 - NO text, typography, diagrams, or infographics in image_prompt
-- VARIETY REQUIRED: each slide must use a subject from a different category (outdoor/nature, body/skin, food/ingredient, urban texture, travel/place) — do not repeat the same category twice in one carousel
+- The slide imagery must feel like the same brand world as slide 1, not a different aesthetic on each slide
+- Keep one coherent visual system across the carousel: consistent mood, lighting logic, environmental tension, and editorial feel
+- Use the same carousel visual direction on every slide:
+  - Aesthetic mode: ${selectedAesthetic}
+  - Core visual tension: ${selectedTension}
+- Vary scenes within that world, but do not jump between unrelated stock-photo categories just to force variety
+- Prefer motif continuity, recurring materials, recurring spatial logic, and escalating emotional tension over random subject rotation
+- Each image_prompt should support the hook with a complementary unresolved cinematic moment, not explain the label literally
 
 LABEL FORMAT — choose based on topic type:
 
@@ -518,6 +571,14 @@ Labels for concept slides: plain, specific, 10–22 words. Lowercase. No jargon.
 
 VISUAL AESTHETIC:
 ${profile.imageStyle}
+
+IMAGE PROMPT STYLE:
+- Write image prompts as cinematic, photoreal visual scenes rather than design directions or ad concepts
+- One dominant focal subject per slide
+- Prefer asymmetry, negative space, layered depth, obstruction, threshold moments, aftermath, implied motion, and emotional ambiguity
+- Partial human presence is allowed only as fragments such as hands, wrists, silhouettes, or body crops; no full face, no full body, no influencer portrait
+- No phone screens, fake app UI, logos, visible text, diagrams, infographics, generic flat lays, beige wellness stock imagery, or cliché zen imagery
+- The sequence should feel like adjacent scenes from the same film, not different Pinterest boards
 
 Return JSON only (no markdown fences):
 ${slidesSchema}`, slidesSchema);
@@ -561,7 +622,8 @@ async function main() {
   const captionData = await runCaptionPipeline(profile, topic);
 
   // ── Step 6: Slide planning ──
-  const slides = await planSlides(captionData, profile, slideCount);
+  const visualDirection = pickCarouselVisualDirection();
+  const slides = await planSlides(captionData, profile, slideCount, visualDirection);
 
   // ── Step 6.5: Anchor image ──
   header('6.5', 'Anchor image');
@@ -578,6 +640,7 @@ async function main() {
         topic,
         hook: slides[0]?.label ?? captionData.best_caption,
         recentAnchors: getRecentAnchorHistory(pInput),
+        visualDirection,
       });
     } else {
       const autoMode = !!process.env.AUTO_SCHEDULE_HST;
@@ -623,7 +686,8 @@ async function main() {
     console.log(`  Submitting slide ${s.n}...`);
     predIds[s.n] = await replicateSubmit('prunaai/z-image-turbo', {
       prompt: s.image_prompt,
-      dimensions: '576x1024',
+      width: 576,
+      height: 1024,
       num_inference_steps: 9,
       guidance_scale: 0.0,
     });
