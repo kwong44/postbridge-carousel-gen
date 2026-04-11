@@ -75,9 +75,11 @@ Image prompt formula: "{Specific subject and action or texture}. {Authentic ligh
     overlayStyle: { font: 'sans', align: 'center', scale: 0.82 },
     imageStyle: `Aspirational wellness realism that stops the scroll immediately. Images should feel beautiful, emotionally legible, and uplifting without becoming cheesy or fake. Prioritize scenic, expansive, healing imagery that feels relatable to meditation, voice journaling, inner clarity, and personal growth.
 
-Preferred subjects: glowing horizons, ocean overlooks, mountain paths, wildflower fields, cliff edges, sunrise or sunset skies, reflective water at golden hour, open roads, warm interiors connected to nature, simple wellness rituals, and distant or partial human presence that suggests release, relief, or becoming.
+Preferred subjects: glowing horizons, ocean overlooks, mountain paths, wildflower fields, cliff edges, sunrise or sunset skies, reflective water at golden hour, open roads, warm interiors connected to nature, tactile non-text objects, and distant or partial human presence that suggests release, relief, or becoming.
 
 Color mood: golden amber, peach light, sea glass blue, warm sand, soft green, clean sky blue, sunlit neutral stone. Light: sunrise glow, sunset backlight, clean daylight, golden-hour rim light, luminous overcast brightness. Composition: bold focal subject, scenic depth, emotional scale, wind or motion when helpful, generous negative space, and immediately readable beauty.
+
+Hard avoids: books, journals, notebooks, open pages, paper with visible writing, readable text artifacts, flat lays styled around stationery, and anything that makes AI-generated text obvious.
 
 Image prompt formula: "{One emotionally striking wellness scene built around a single dominant subject}. {Beautiful natural light and uplifting color}. {Cinematic composition with depth, motion, or scale}. Photorealistic, cinematic editorial image, no text, no logos."`,
     visualMotifFamilies: [
@@ -86,7 +88,7 @@ Image prompt formula: "{One emotionally striking wellness scene built around a s
       'triumphant path or summit: trails, ridgelines, steps toward a viewpoint, reaching higher ground, breakthrough motion, and grounded victory',
       'calm reflective nature: still water, wind through grass, trees in warm light, flowers, natural textures, and peaceful clarity without cliché zen props',
       'partial or distant human presence: silhouettes, backs, distant figures, hands, shoulders, or body fragments interacting with beautiful environments, never a full face or full body',
-      'tactile wellness ritual: journals, tea, bare feet on stone, sunlit curtains, voice notes, blankets, windows, and objects that feel warm, lived-in, and hopeful',
+      'tactile wellness ritual: tea, blankets, curtains, windows, ceramic objects, linen, bare feet on stone, and other warm lived-in non-text objects that feel restorative and hopeful',
     ],
   },
 };
@@ -227,6 +229,38 @@ async function sendTelegram(text) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: TG_CHAT_ID, text }),
   }).catch(() => {});
+}
+
+async function sendTelegramPhotos(filePaths) {
+  if (!TG_TOKEN || !TG_CHAT_ID) return;
+
+  const existingFiles = filePaths.filter(filePath => existsSync(filePath));
+  if (existingFiles.length === 0) return;
+
+  for (let i = 0; i < existingFiles.length; i += 10) {
+    const batch = existingFiles.slice(i, i + 10);
+    const form = new FormData();
+    const media = batch.map((filePath, index) => ({
+      type: 'photo',
+      media: `attach://photo${index}`,
+    }));
+
+    form.append('chat_id', TG_CHAT_ID);
+    form.append('media', JSON.stringify(media));
+
+    batch.forEach((filePath, index) => {
+      form.append(
+        `photo${index}`,
+        new Blob([readFileSync(filePath)], { type: 'image/jpeg' }),
+        `slide_${i + index + 1}.jpg`,
+      );
+    });
+
+    await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMediaGroup`, {
+      method: 'POST',
+      body: form,
+    }).catch(() => {});
+  }
 }
 
 function getRunsLogPath(profileName) {
@@ -404,11 +438,11 @@ function getMotifFamilyPromptGuidance(motifFamily) {
 
   if (family.includes('tactile wellness ritual')) {
     return {
-      focus: 'a journal, tea, blanket, open window, voice note moment, bare feet on warm stone, or another lived-in ritual object that feels restorative and hopeful',
+      focus: 'tea, blanket, ceramic cup, open window, linen curtain, bare feet on warm stone, or another lived-in ritual object that feels restorative and hopeful without involving paper or text-bearing objects',
       light: 'sunlit window glow, golden-hour spill, soft morning brightness, or warm natural light',
       palette: 'paper cream, warm sand, honey light, soft green, pale sky blue, and natural wood',
       composition: 'tight but inviting editorial framing around one tactile ritual scene with warmth, beauty, and emotional immediacy',
-      hardAvoids: 'No dim lonely interiors, tangled-cord melancholy, harsh clutter, generic desk flat lays, or cold tech-first object scenes',
+      hardAvoids: 'No books, journals, notebooks, open pages, readable paper, generic desk flat lays, dim lonely interiors, tangled-cord melancholy, harsh clutter, or cold tech-first object scenes',
     };
   }
 
@@ -428,6 +462,7 @@ function inspectImagePrompt(text, motifFamily = null) {
   const bannedPatterns = [
     { pattern: /\bphone screens?\b|\bsmartphone\b|\bphone ui\b|\bapp ui\b|\bapp interface\b|\bscreenshot\b/, reason: 'contains phone/app UI language' },
     { pattern: /\blogos?\b|\bwatermarks?\b|\bvisible text\b|\btypography\b|\bwords\b/, reason: 'contains text/logo language' },
+    { pattern: /\bbooks?\b|\bjournals?\b|\bnotebooks?\b|\bpages?\b|\bpaper\b|\bhandwriting\b|\bwritten\b|\bwriting\b/, reason: 'contains text-bearing paper object language' },
     { pattern: /\bfull face\b|\bface visible\b|\blooking at camera\b|\bdirect eye contact\b|\binfluencer portrait\b|\bselfie\b/, reason: 'contains disallowed face/portrait language' },
   ];
 
@@ -488,6 +523,7 @@ Hard rules:
 - Return ONLY the final prompt string
 - One dominant focal subject
 - No phone screens, smartphones, app UI, app interface, screenshots, logos, watermarks, or visible text
+- No books, journals, notebooks, open pages, readable paper, or any object with visible writing
 - No full face, selfie, influencer portrait, direct eye contact, or full body
 - Keep it photorealistic and cinematic, not a graphic design concept
 - Preserve the same carousel visual world and emotional tension
@@ -560,6 +596,7 @@ Visual Strategy:
 
 Hard Avoids:
 - No phone screens, fake app UI, logos, or visible text
+- No books, journals, notebooks, paper pages, stationery flat lays, or any readable writing artifact
 - No generic desk still lifes, flat lays, beige wellness stock imagery, low-contrast compositions, centered object-only still lifes, or cliché zen imagery
 - No stacked stones
 - No empty concrete hallways, parked car interiors, urban residue noir, or bleak dim-room melancholy
@@ -608,6 +645,7 @@ Requirements:
 - Create one emotionally striking, scroll-stopping wellness image that supports the slide label without illustrating it literally
 - One dominant focal subject
 - Photorealistic and cinematic, not a graphic design concept
+- No books, journals, notebooks, open pages, readable paper, or visible writing artifacts
 - Partial human presence is allowed only if the motif family is "partial or distant human presence"
 - If the motif family is not "partial or distant human presence", do not use hands, wrists, shoulders, silhouettes, or any visible body fragment
 - No full face, no full body, no influencer portrait
@@ -819,7 +857,7 @@ ${captionSchema}`, captionSchema);
 
 // ─── LLM: Slide planning (Step 6) ────────────────────────────────────────────
 
-async function planSlidesForWellness(captionData, profile, count, visualDirection) {
+async function planSlidesForWellness(sourceTopic, captionData, profile, count, visualDirection) {
   const { selectedAesthetic, selectedTension } = visualDirection ?? pickCarouselVisualDirection();
   console.log(`  Visual direction: aesthetic="${selectedAesthetic}" | tension="${selectedTension}"`);
 
@@ -832,9 +870,15 @@ async function planSlidesForWellness(captionData, profile, count, visualDirectio
 
   const { slides } = await llmJson(`Plan ${count} slides for a TikTok carousel.
 
+Original topic: ${sourceTopic}
 Caption (what this post promises the viewer): ${captionData.best_caption}
 Tone: ${captionData.target_tone}
 Niche: ${profile.niche}
+
+Core objective:
+- Write overlay text the viewer would actually stop, read, save, or send to a friend
+- Keep the overlays tightly anchored to the original topic, not the broader brand category
+- Do not let generic wellness language replace the specific pain point, mechanism, or payoff in the topic
 
 SLIDE 1 — ANCHOR SLIDE (${profile.anchorLabelDescription}, already cached):
 - Provide "label" only — no "image_prompt"
@@ -877,6 +921,12 @@ FORMAT C — Story arc (Problem → Insight → Shift): slide 1 names a relatabl
 
 Labels for concept slides: plain, specific, 10–22 words. Lowercase. No jargon. Reads like a clear thought, not a bullet point.
 
+ANTI-DRIFT RULES:
+- The original topic is the source of truth. Build labels from that, not from the caption wording alone.
+- Avoid generic fallback language that could fit any post in the niche.
+- Do not repeat the same branded term across multiple slides unless the topic itself is explicitly about that term.
+- Every slide should make sense even if the viewer never sees the caption.
+
 VISUAL AESTHETIC:
 ${profile.imageStyle}
 
@@ -901,7 +951,7 @@ ${slidesSchema}`, slidesSchema);
       console.log(`  Repairing missing image prompt for slide ${slide.n}...`);
       slide.image_prompt = await generateSlideImagePrompt({
         profile,
-        topic: captionData.best_caption,
+        topic: sourceTopic,
         hook,
         label: slide.label,
         slideNumber: slide.n,
@@ -915,7 +965,7 @@ ${slidesSchema}`, slidesSchema);
       slide.image_prompt = await repairImagePrompt({
         originalPrompt: inspected.cleaned,
         profile,
-        topic: captionData.best_caption,
+        topic: sourceTopic,
         hook,
         label: slide.label,
         motifFamily: null,
@@ -932,7 +982,7 @@ ${slidesSchema}`, slidesSchema);
   return slides;
 }
 
-async function planSlidesForUpgrades(captionData, profile, count, visualDirection) {
+async function planSlidesForUpgrades(sourceTopic, captionData, profile, count, visualDirection) {
   const { selectedAesthetic, selectedTension } = visualDirection ?? pickCarouselVisualDirection();
   const motifFamilyOrder = getMotifFamilyOrder(profile, count);
   console.log(`  Visual direction: aesthetic="${selectedAesthetic}" | tension="${selectedTension}"`);
@@ -948,9 +998,16 @@ async function planSlidesForUpgrades(captionData, profile, count, visualDirectio
 
   const { slides } = await llmJson(`Plan ${count} slides for a TikTok carousel.
 
+Original topic: ${sourceTopic}
 Caption (what this post promises the viewer): ${captionData.best_caption}
 Tone: ${captionData.target_tone}
 Niche: ${profile.niche}
+
+Core objective:
+- Write viral on-screen overlay text, not caption copy
+- Make each slide feel natively TikTok: sharp, emotionally legible, save-worthy, and easy to read fast
+- Stay specific to the original topic's pain point, insight, mechanism, or shift
+- Do not let the broader brand niche swallow the actual idea
 
 SLIDE 1 — ANCHOR SLIDE (${profile.anchorLabelDescription}, already cached):
 - Provide "label" only — no "image_prompt"
@@ -995,6 +1052,26 @@ FORMAT C — Story arc (Problem → Insight → Shift): slide 1 names a relatabl
 
 Labels for concept slides: plain, specific, 10–22 words. Lowercase. No jargon. Reads like a clear thought, not a bullet point.
 
+VIRAL OVERLAY RULES:
+- Each label should feel like something a real person would screenshot, send, or think "wait, that's me"
+- Prefer second-person or confessional first-person phrasing over generic advice copy
+- Bias toward tension, recognition, contrast, or a surprising reframe
+- Name the exact moment, symptom, mistake, pattern, or shift from the topic
+- Keep labels punchy and clean; avoid sounding like meditation app onboarding copy
+
+HARD AVOIDS:
+- Do not make every slide about "voice journaling", "your voice", "press record", "Oasis app", or "the mic"
+- Do not use product mentions except optionally on the final slide, and only if it fits naturally
+- Do not write labels that could be pasted onto any topic in this niche
+- Do not turn the whole carousel into a feature pitch or generic self-help affirmation
+
+GOOD DIRECTIONS:
+- "your spiral gets louder when you argue with it"
+- "cbt starts working faster when you stop treating every thought like a fact"
+- "the thought that wakes you up at 2am usually isn’t the first problem"
+- "naming the distortion breaks half its power"
+- "you don’t need a better thought first. you need distance."
+
 VISUAL AESTHETIC:
 ${profile.imageStyle}
 
@@ -1021,7 +1098,7 @@ ${slidesSchema}`, slidesSchema);
     console.log(`  Generating image prompt for slide ${slide.n} using motif family: ${slide.motif_family}`);
     slide.image_prompt = await generateSlideImagePrompt({
       profile,
-      topic: captionData.best_caption,
+      topic: sourceTopic,
       hook,
       label: slide.label,
       slideNumber: slide.n,
@@ -1035,7 +1112,7 @@ ${slidesSchema}`, slidesSchema);
       slide.image_prompt = await repairImagePrompt({
         originalPrompt: inspected.cleaned,
         profile,
-        topic: captionData.best_caption,
+        topic: sourceTopic,
         hook,
         label: slide.label,
         motifFamily: slide.motif_family,
@@ -1052,12 +1129,12 @@ ${slidesSchema}`, slidesSchema);
   return slides;
 }
 
-async function planSlidesForProfile(profileName, captionData, profile, count, visualDirection) {
+async function planSlidesForProfile(profileName, sourceTopic, captionData, profile, count, visualDirection) {
   header(6, `Slide planning (${count} slides)`);
   if (profileName === 'upgrades') {
-    return planSlidesForUpgrades(captionData, profile, count, visualDirection);
+    return planSlidesForUpgrades(sourceTopic, captionData, profile, count, visualDirection);
   }
-  return planSlidesForWellness(captionData, profile, count, visualDirection);
+  return planSlidesForWellness(sourceTopic, captionData, profile, count, visualDirection);
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -1097,7 +1174,7 @@ async function main() {
 
   // ── Step 6: Slide planning ──
   const visualDirection = pickCarouselVisualDirection(pInput, profile);
-  const slides = await planSlidesForProfile(pInput, captionData, profile, slideCount, visualDirection);
+  const slides = await planSlidesForProfile(pInput, topic, captionData, profile, slideCount, visualDirection);
 
   // ── Step 6.5: Anchor image ──
   header('6.5', 'Anchor image');
@@ -1211,6 +1288,7 @@ async function main() {
   if (!process.env.AUTO_SCHEDULE_HST) execSync(`open "${tmp}"`);
 
   await sendTelegram(`${captionData.best_caption}\n\n${captionData.best_hashtags.join(' ')}`);
+  await sendTelegramPhotos(slides.map(s => labeled[s.n]).filter(Boolean));
 
   let scheduledAt = null;
   const autoScheduleHst = process.env.AUTO_SCHEDULE_HST;
