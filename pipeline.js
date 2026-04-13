@@ -67,7 +67,7 @@ Image prompt formula: "{Specific subject and action or texture}. {Authentic ligh
     niche:    'Voice journaling, meditation, mindfulness, radical presence, inner work — promoting the Oasis app',
     audience: 'Mixed gender 18–35 interested in journaling, meditation, CBT, stoicism, and intentional self-improvement',
     tone:     'Calm, grounded, intentional. Quiet authority — a trusted guide, not a hype brand. No fluff. Speaks plainly about inner life and mental clarity.',
-    hashtags: ['#voicejournaling', '#meditation', '#mindfulness', '#selfimprovement', '#innerwork', '#journaling', '#radicalpresence', '#stoicism', '#oasisapp', '#fyp'],
+    hashtags: ['#mindset', '#meditation', '#mindfulness', '#selfimprovement', '#innerwork', '#mindsetmatters', '#mindsetshift', '#stoicism', '#selfcare', '#fyp'],
     useAiAnchorPrompt: true,
     anchorPath: join(ROOT, 'media', 'anchor_upgrades.jpg'),
     anchorLabelDescription: 'brand anchor image',
@@ -998,11 +998,11 @@ ${raw}`);
 // ─── LLM: Caption pipeline (Steps 1–4) ───────────────────────────────────────
 
 async function runCaptionPipeline(profile, topic) {
-  header('1–2', 'Scene analysis + caption strategy');
+  header('1–2', 'Topic analysis + caption strategy');
 
   const analysisSchema = `{
-  "scene_description": "concise description of the content/visual world for this post",
-  "content_category": "one-word category",
+  "topic_summary": "plain-language summary of what the post is about",
+  "content_angle": "specific viewer-facing angle or promise for the caption",
   "target_tone": "tone phrase",
   "cta": "call to action phrase",
   "hashtag_approach": "brief note on hashtag selection"
@@ -1016,9 +1016,15 @@ Niche: ${profile.niche}
 Tone: ${profile.tone}
 Available hashtags: ${profile.hashtags.join(', ')}
 
+Rules:
+- Keep "topic_summary" deterministic and tightly paraphrased from the topic
+- Keep "content_angle" specific to what the viewer will learn, recognize, or get from the post
+- Do not invent a visual scene, aesthetic, or setting unless the topic explicitly includes one
+
 Return JSON only (no markdown fences):
 ${analysisSchema}`, analysisSchema);
-  console.log(`  Scene:  ${analysis.scene_description}`);
+  console.log(`  Summary: ${analysis.topic_summary}`);
+  console.log(`  Angle:   ${analysis.content_angle}`);
   console.log(`  Tone:   ${analysis.target_tone}`);
 
   header('3–4', 'Caption generation + selection');
@@ -1032,7 +1038,9 @@ ${analysisSchema}`, analysisSchema);
   const captionRules = getCaptionGenerationInstructions(profile);
   const caption = await llmJson(`Generate caption variations for this content, then select the single best one.
 
-Scene: ${analysis.scene_description}
+Original topic: ${topic}
+Topic summary: ${analysis.topic_summary}
+Content angle: ${analysis.content_angle}
 Tone: ${analysis.target_tone}
 CTA: ${analysis.cta}
 Hashtag guidance: ${analysis.hashtag_approach}
