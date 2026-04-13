@@ -90,19 +90,72 @@ function hstToUtc(hhmm) {
 
 function parseTopics(mdText) {
   const topics = [];
+  const categories = [];
+  const lines = mdText.split('\n');
   let currentCategory = 'General';
-  for (const line of mdText.split('\n')) {
+
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const line = lines[lineIndex];
     const catMatch = line.match(/^##\s+(.+)/);
-    if (catMatch) { currentCategory = catMatch[1].trim(); continue; }
-    const topicMatch = line.match(/^-\s+(.+)/);
-    if (topicMatch) topics.push({ topic: topicMatch[1].trim(), category: currentCategory });
+    if (catMatch) {
+      currentCategory = catMatch[1].trim();
+      if (!categories.includes(currentCategory)) categories.push(currentCategory);
+      continue;
+    }
+
+    const topicMatch = line.match(/^-\s+(.+?)(?:\s+--(DONE|USED))?\s*$/);
+    if (!topicMatch) continue;
+
+    const topic = topicMatch[1].trim();
+    const status = topicMatch[2] ?? null;
+    topics.push({ topic, category: currentCategory, lineIndex, status });
+    if (!categories.includes(currentCategory)) categories.push(currentCategory);
   }
-  return topics;
+
+  return { topics, categories, lines };
 }
 
-function findNextTopic(allTopics, postedTopics) {
-  const postedSet = new Set(postedTopics.map(p => p.topic));
-  return allTopics.find(t => !postedSet.has(t.topic)) ?? null;
+function chooseNextTopic(topics, categories, lastCategory, postedTopics) {
+  const postedSet = new Set([
+    ...postedTopics.map(p => p.topic),
+    ...topics.filter(t => t.status === 'DONE' || t.status === 'USED').map(t => t.topic),
+  ]);
+  const availableByCategory = new Map();
+
+  for (const category of categories) {
+    availableByCategory.set(category, []);
+  }
+
+  for (const topic of topics) {
+    if (postedSet.has(topic.topic)) continue;
+    if (!availableByCategory.has(topic.category)) availableByCategory.set(topic.category, []);
+    availableByCategory.get(topic.category).push(topic);
+  }
+
+  if (categories.length === 0) return null;
+
+  const startIndex = lastCategory ? categories.indexOf(lastCategory) : -1;
+  for (let offset = 1; offset <= categories.length; offset += 1) {
+    const category = categories[(startIndex + offset) % categories.length];
+    const bucket = availableByCategory.get(category) ?? [];
+    if (bucket.length > 0) return bucket[0];
+  }
+
+  return null;
+}
+
+function markTopicDone(lines, topic) {
+  if (topic.lineIndex == null) return lines;
+  const updated = [...lines];
+  const current = updated[topic.lineIndex];
+  if (typeof current !== 'string') return lines;
+
+  const nextLine = current
+    .replace(/\s+--(DONE|USED)\s*$/, '')
+    .replace(/\s+$/, '') + ' --DONE';
+
+  updated[topic.lineIndex] = nextLine;
+  return updated;
 }
 
 function resolveProfileFiles(profileArg) {
@@ -145,6 +198,7 @@ function resolveProfileFiles(profileArg) {
 async function main() {
   const profileArg = getFlagValue('--profile');
   const { profile, configPath, statePath, topicsPath } = resolveProfileFiles(profileArg);
+  const skipPostbridge = process.env.SKIP_POSTBRIDGE === '1';
 
   const config = readJson(configPath);
   let state    = readJson(statePath, { post_count: 0, cycle: 1, posts: [] });
@@ -154,18 +208,18 @@ async function main() {
     process.exit(1);
   }
 
-  const allTopics = parseTopics(readFileSync(topicsPath, 'utf8'));
+  const topicFile = readFileSync(topicsPath, 'utf8');
+  const { topics: allTopics, categories, lines: topicLines } = parseTopics(topicFile);
   if (allTopics.length === 0) {
     log(`ERROR: No topics found in ${topicsPath}`);
     process.exit(1);
   }
 
-  let nextTopic = findNextTopic(allTopics, state.posts);
+  const lastCategory = state.posts.length > 0 ? state.posts[state.posts.length - 1]?.category ?? null : null;
+  const nextTopic = chooseNextTopic(allTopics, categories, lastCategory, state.posts);
   if (!nextTopic) {
-    log(`All ${allTopics.length} topics cycled — starting new cycle ${state.cycle + 1}`);
-    state = { ...state, cycle: state.cycle + 1, posts: [] };
-    writeJson(statePath, state);
-    nextTopic = allTopics[0];
+    log(`All topics in ${topicsPath} are marked DONE/USED — add new topics to continue`);
+    process.exit(1);
   }
 
   const anchorRegenEveryDays = Number(config.anchor_regen_every) || 0;
@@ -179,6 +233,7 @@ async function main() {
   log(`State: ${statePath}`);
   log(`Topics: ${topicsPath}`);
   log(`Next topic: "${nextTopic.topic}" (${nextTopic.category})`);
+  log(`Category rotation: last=${lastCategory ?? 'none'} -> next=${nextTopic.category}`);
   log(`Post count: ${state.post_count} | Cycle: ${state.cycle}`);
   log(`Anchor regen cadence: every ${anchorRegenEveryDays} day(s)`);
   log(`Last anchor regen: ${lastAnchorRegeneratedAt ?? 'unknown'} | age: ${Number.isFinite(anchorAgeDays) ? anchorAgeDays.toFixed(2) : 'unknown'} day(s)`);
@@ -224,9 +279,12 @@ async function main() {
   // Parse post ID from pipeline output
   const idMatch = captured.match(/✅ Post created — ID: (\S+)/);
   const postId  = idMatch ? idMatch[1] : null;
-  if (!postId) {
+  if (!postId && !skipPostbridge) {
     log('ERROR: Could not parse post_id from pipeline output — state NOT advanced');
     process.exit(1);
+  }
+  if (!postId && skipPostbridge) {
+    log('INFO: pipeline skipped PostBridge; advancing state without a post_id');
   }
 
   // Advance state
@@ -237,7 +295,7 @@ async function main() {
     profile,
     scheduled_at: hstToUtc(config.post_time_hst),
     created_at:   new Date().toISOString(),
-    pb_status:    'scheduled',
+    pb_status:    postId ? 'scheduled' : 'skipped',
   });
   state.post_count = (state.post_count ?? 0) + 1;
   if (shouldRegenAnchor) {
@@ -246,6 +304,10 @@ async function main() {
     state.last_anchor_regenerated_at = lastAnchorRegeneratedAt;
   }
   writeJson(statePath, state);
+  const updatedTopicLines = markTopicDone(topicLines, nextTopic);
+  if (updatedTopicLines !== topicLines) {
+    writeFileSync(topicsPath, updatedTopicLines.join('\n') + '\n', 'utf8');
+  }
 
   log(`SUCCESS: post_id=${postId ?? 'unknown'} topic="${nextTopic.topic}"`);
 }

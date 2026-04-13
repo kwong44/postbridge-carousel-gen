@@ -34,6 +34,7 @@ const LEGACY_RUNS_LOG       = join(ROOT, 'logs', 'runs.jsonl');
 const LEGACY_WELLNESS_ANCHOR = join(ROOT, 'media', 'anchor_girl.jpg');
 const TG_TOKEN              = process.env.TELEGRAM_BOT_TOKEN;
 const TG_CHAT_ID            = process.env.TELEGRAM_NOTIFY_CHAT_ID;
+const SKIP_POSTBRIDGE       = process.env.SKIP_POSTBRIDGE === '1';
 
 const PROFILES = {
   wellness: {
@@ -1576,6 +1577,17 @@ async function main() {
 
   // ── Steps 10–11: Upload + post ──
   header('10–11', 'Uploading images + creating post');
+
+  if (SKIP_POSTBRIDGE) {
+    console.warn('⚠️  PostBridge skipped by SKIP_POSTBRIDGE=1.');
+    console.warn('    Local assets are ready for manual posting; skipping upload and post creation.');
+    console.warn(`    Asset folder: ${tmp}`);
+    logRun({ profile: pInput, topic, captionData, slides, postId: null, scheduledAt, anchorPrompt: anchorPromptUsed, visualDirection });
+    console.log('\n  ⏭️ PostBridge skipped — no post created');
+    rl.close();
+    console.log('\n🎉 Done!\n');
+    process.exit(0);
+  }
 
   if (profile.accounts.length === 0) {
     console.warn('⚠️  No PostBridge account IDs configured for this profile.');
