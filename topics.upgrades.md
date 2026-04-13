@@ -1,105 +1,77 @@
 # Oasis App Topics
 
-Topics for TikTok carousels focused on meditation, journaling, and mental clarity.
+Topics for TikTok carousels focused on emotional patterns, inner work, and mental clarity.
 
 ---
 
-## Journaling
-- why voice journaling works when written journaling feels impossible
-- the 2-minute journaling reset I use when my mind feels crowded
-- what to journal about when you know you're off but can't explain why
-- the prompt I use when I'm spiraling and need to slow my thoughts down
-- journaling helped me notice patterns I kept calling random stress
+## Survival Mode & Overwhelm
+- why you feel guilty when you rest even though you're already exhausted
+- how to tell if you're overwhelmed or just emotionally disconnected
+- why your body still feels unsafe even when nothing is wrong
+- the pattern behind feeling behind no matter how much you get done
+- what keeps your mind racing long after the day is over
+- why you crash the moment things finally get quiet
+- how survival mode makes normal decisions feel weirdly heavy
+- the signs you're functioning but still deeply dysregulated
+- why everything feels personal when your nervous system is overloaded
+- what changes when you stop treating pressure like proof that you care
 
-## Meditation
-- meditation got easier when I stopped trying to clear my mind
-- what to do in meditation when your thoughts won't slow down
-- the difference between zoning out and actually being present
-- why short daily meditation works better for me than long sessions
-- the meditation mistake that made me think I was bad at it
+## Self-Abandonment & Boundaries
+- why you keep saying yes when your body already said no
+- the pattern behind over-explaining yourself to people who misread you
+- what makes you abandon your needs the moment someone gets uncomfortable
+- why resentment builds when you're always the emotionally flexible one
+- how to tell if you're being kind or slowly betraying yourself
+- the hidden cost of trying to be easy to love all the time
+- why people-pleasing feels safer than honesty in the moment
+- what changes when you stop earning closeness by self-erasing
+- the signs your boundaries only exist in your head
+- why you feel responsible for emotions that were never yours to manage
 
-## Mindfulness
-- what grounding actually feels like in the middle of a stressful day
-- the fastest way I come back to the present when my brain is racing
-- why awareness changes things before discipline does
-- mindfulness helped me catch stress before it turned into shutdown
-- the habit that made me notice my inner state sooner
+## Thought Loops & Inner Dialogue
+- why one hard moment turns into a three-hour spiral in your head
+- the pattern behind believing your worst thought when you're tired
+- what changes when you stop treating every thought like a fact
+- why your brain keeps rehearsing conversations that will never happen
+- how to tell if you're reflecting or just looping with better vocabulary
+- the thought habit that makes small problems feel emotionally permanent
+- why self-criticism still feels productive even when it never helps
+- what keeps you mentally returning to the same unresolved scene
+- why nighttime thoughts sound more true than they actually are
+- the shift that breaks a spiral before it becomes your whole day
 
-## Emotional Clarity
-- how I tell the difference between overwhelm and avoidance now
-- the question I ask when I feel reactive and don't know why
-- what helped me stop looping the same thoughts every night
-- the small pause that keeps a hard moment from taking over my day
-- how naming the feeling changed the way I respond to stress
+## Identity Shifts & Letting Go
+- why growth feels lonely when your old identity no longer fits
+- the story about yourself that's quietly limiting every new version of you
+- what happens when you stop performing the self-image that kept you safe
+- why change gets harder when your identity is built on being needed
+- how to tell if you're evolving or just collecting better language
+- the grief that shows up when you outgrow who you had to be
+- why your old role in other people's lives fights your healing
+- what changes when you stop defending the version of you that was surviving
+- the identity pattern behind saying you want change but resisting every shift
+- why becoming yourself can feel like disappointing people first
 
-## Neuroplasticity & Brain Rewiring
-- your brain can actually change and here's what that means for you
-- the daily habit that's quietly rewiring your nervous system
-- what neuroplasticity actually is (not the oversimplified version)
-- I started treating my thoughts like patterns I could change — here's what happened
-- the science behind why journaling rewires your brain over time
-- how repetition changes the physical structure of your brain
-- why your old thought loops feel automatic and how to break them
-- what happens in your brain when you sit still and breathe for 10 minutes
-- the reason growth gets easier over time — neuroplasticity explained simply
-- how consistent inner work creates lasting change at a brain level
+## Regulation & Emotional Recovery
+- what actually helps after a trigger instead of just making you look calm
+- why being numb and being regulated are not the same thing
+- how to come back to yourself after your body says danger
+- the signs you need recovery instead of more discipline
+- what helps you feel safe again after an emotionally hard day
+- why forcing calm usually makes your nervous system louder
+- how to tell when your body needs soothing before your mind can think clearly
+- the regulation shift that makes small stressors stop hijacking the whole day
+- what changes when you build recovery into your day instead of waiting to crash
+- why emotional recovery takes longer when you're still pretending you're fine
 
-## CBT & Thought Work
-- the CBT technique I use when my brain spirals at 2am
-- cognitive distortions I didn't know I had until I started journaling
-- what CBT actually teaches you that therapy doesn't always spell out
-- the thought record method and why it's the most underrated mental tool
-- I started questioning my automatic thoughts and everything shifted
-- how to catch the story your brain makes up when something goes wrong
-- the difference between a thought and a fact (most people blur this)
-- CBT taught me that feelings aren't evidence — this is what I do now
-- the reframe that stops a catastrophic thought in under a minute
-- I used to believe every thought I had — here's why I stopped
-
-## Shadow Work
-- shadow work sounds intense but it changed how I see myself
-- the parts of yourself you push down are running more of your life than you think
-- I started doing shadow work and the anger I thought was gone came back — then left for real
-- what Carl Jung meant by the shadow and why it actually matters
-- the journaling prompt that helped me see a pattern I'd been blind to for years
-- shadow work isn't about being dark — it's about being whole
-- how ignoring parts of yourself shows up in your relationships
-- the moment I realized my biggest trigger was pointing at something I hadn't dealt with
-- why the traits that bother you most in others say something about you
-- I stopped judging the uncomfortable parts of myself and got way more stable
-
-## Self-Awareness & Inner Work
-- the question I journal every night that made me way harder to manipulate
-- what it actually means to know yourself (and how most people skip this)
-- I started noticing my patterns instead of just living them — here's what changed
-- the difference between reacting and responding, and how to train the gap
-- inner work isn't navel-gazing — it's the most practical thing I've ever done
-- how self-awareness made me better at every relationship in my life
-- the journaling habit that showed me I was the common thread in my problems
-- I used to avoid silence — now I understand why and it changed everything
-- what "doing the work" actually looks like day to day
-- the internal shift that happens when you stop outsourcing your emotional regulation
-
-## Nervous System & Regulation
-- everything changed when I learned I was living in fight-or-flight
-- the breathing technique that stops a stress response faster than anything else
-- why your body holds stress even when your mind says you're fine
-- I started tracking my nervous system state and my whole day got easier
-- the difference between being calm and being regulated (they're not the same)
-- what co-regulation is and why you keep seeking certain people when stressed
-- how chronic stress rewires your threat response — and how to undo it
-- I started one somatic practice a day and my baseline shifted in two weeks
-- the window of tolerance explained in a way that finally clicked for me
-- why mindfulness works — the nervous system version
-
-## Ego & Identity
-- the ego isn't the enemy — but ignoring it is
-- what I learned about myself when I stopped defending my self-image
-- how your identity shapes what you'll allow yourself to change
-- the hardest part of growth is grieving who you used to be
-- I let go of a story I'd been telling myself for 10 years — here's what I found under it
-- why some people resist change even when they say they want it
-- the difference between who you are and who you've learned to perform
-- how attachment to your old self slows down every upgrade you try to make
-- I stopped arguing for my limitations the week everything started moving
-- the identity shift that has to happen before the behavior shift can stick
+## Shadow Patterns & Deeper Self-Awareness
+- why the traits that trigger you most usually point somewhere personal
+- the pattern behind choosing people who keep you emotionally uncertain
+- what your strongest reactions reveal when the moment feels bigger than it should
+- why you keep repeating a dynamic you already know hurts you
+- the signs a trigger is protecting an older wound instead of this moment
+- what changes when you stop judging the part of you that's still defensive
+- why projection feels convincing when you're avoiding your own discomfort
+- the blind spot behind blaming patterns on bad luck every time
+- how to tell if your intuition is clear or just shaped by old pain
+- the shadow pattern behind feeling drawn to what keeps destabilizing you

@@ -75,22 +75,23 @@ Image prompt formula: "{Specific subject and action or texture}. {Authentic ligh
     slide1LabelInstruction: 'Label MUST be a lowercase listicle hook that mirrors the caption promise. Prefer 5 items; otherwise 7 or 3. Format should feel native to TikTok self-improvement content, e.g. "5 mindset shifts that turn pain into power", "5 signs you\'re stuck in survival mode", "5 ways to stop abandoning yourself". Keep it concrete, curiosity-led, and easy to understand instantly. Do NOT start with "POV:". Do NOT use emojis, product mentions, or vague hype.',
     negativePrompt: 'full face, direct eye contact, selfie, influencer pose, phone UI, app screenshot, visible text, logo, watermark, neon colors, clutter, collage, multiple subjects, stock photo look',
     overlayStyle: { font: 'sans', align: 'center', scale: 0.82 },
-    imageStyle: `Aspirational wellness realism that stops the scroll immediately. Images should feel beautiful, emotionally legible, and uplifting without becoming cheesy or fake. Prioritize scenic, expansive, healing imagery that feels relatable to meditation, voice journaling, inner clarity, and personal growth.
+    imageStyle: `Face-first emotional realism for TikTok carousels. Slide 1 should feel like a striking editorial portrait that stops the scroll immediately. Slides 2+ should unfold the same emotional world through body signals, environments, rituals, and release imagery rather than repeating portraits.
 
-Preferred subjects: glowing horizons, ocean overlooks, mountain paths, wildflower fields, cliff edges, sunrise or sunset skies, reflective water at golden hour, open roads, warm interiors connected to nature, tactile non-text objects, and distant or partial human presence that suggests release, relief, or becoming.
+Preferred anchor qualities: close-up human face, emotional specificity, beautiful skin texture, memorable light, direct or near-direct gaze, and cinematic portrait framing that feels intimate rather than influencer-like.
 
-Color mood: golden amber, peach light, sea glass blue, warm sand, soft green, clean sky blue, sunlit neutral stone. Light: sunrise glow, sunset backlight, clean daylight, golden-hour rim light, luminous overcast brightness. Composition: bold focal subject, scenic depth, emotional scale, wind or motion when helpful, generous negative space, and immediately readable beauty.
+Preferred follow-up subjects: cropped body gestures, open roads, windows, ocean edges, stairwells, train windows, tea steam, curtain light, ceramic objects, thresholds, release landscapes, and tactile aftermath objects with emotional residue.
 
-Hard avoids: books, journals, notebooks, open pages, paper with visible writing, readable text artifacts, flat lays styled around stationery, and anything that makes AI-generated text obvious.
+Color mood: warm amber, dusty peach, luminous gold, desaturated blue-grey, clean neutral editorial, muted olive, sea glass blue. Light: window side-light, overcast softness, sunrise warmth, golden-hour spill, cool clean daylight. Composition: strong focal subject, cinematic depth, emotional readability, and a clear visual arc across the carousel.
 
-Image prompt formula: "{One emotionally striking wellness scene built around a single dominant subject}. {Beautiful natural light and uplifting color}. {Cinematic composition with depth, motion, or scale}. Photorealistic, cinematic editorial image, no text, no logos."`,
+Hard avoids: books, journals, notebooks, open pages, paper with visible writing, readable text artifacts, flat lays styled around stationery, app-like imagery, and generic influencer portrait language.
+
+Image prompt formula: "{One emotionally striking portrait or wellness scene built around a single dominant subject}. {Specific light and color grade}. {Cinematic composition with texture, depth, and emotional clarity}. Photorealistic, cinematic editorial image, no text, no logos."`,
     visualMotifFamilies: [
-      'expansive landscape release: coastlines, overlooks, mountains, valleys, open roads, sweeping skies, and the feeling of exhaling into something bigger',
-      'sunset horizon emotion: glowing sunsets, sunrises, horizon lines, clouds lit from behind, open water, desert light, and emotionally resonant sky color',
-      'triumphant path or summit: trails, ridgelines, steps toward a viewpoint, reaching higher ground, breakthrough motion, and grounded victory',
-      'calm reflective nature: still water, wind through grass, trees in warm light, flowers, natural textures, and peaceful clarity without cliché zen props',
-      'partial or distant human presence: silhouettes, backs, distant figures, hands, shoulders, or body fragments interacting with beautiful environments, never a full face or full body',
-      'tactile wellness ritual: tea, blankets, curtains, windows, ceramic objects, linen, bare feet on stone, and other warm lived-in non-text objects that feel restorative and hopeful',
+      'body signal: cropped gestures like hands at face, neck, chest, shoulder, walking legs, back of head, or posture shifts that carry the emotion out of the portrait and into the body',
+      'emotional environment: open roads, train windows, ocean edges, hallways, stairwells, car-window rain, desert dusk, or rooms with strong threshold energy that externalize the same feeling at larger scale',
+      'regulation ritual: tea steam, curtain light, shower steam, bed linen, ceramic cup, shoes on threshold, open window, or another grounded ritual scene that implies regulation, care, or recovery',
+      'release landscape: horizon lines, overlooks, ridgelines, shorelines, fields, paths, and sky breaks that feel like emotional exhale, breakthrough, or aftermath',
+      'aftermath still life: one tactile non-text object with emotional residue, quiet tension, or recovery energy, but never a generic wellness flat lay',
     ],
   },
 };
@@ -207,8 +208,19 @@ async function pbUpload(filePath) {
   return String(media_id);
 }
 
-function overlayText(src, label, dest) {
-  const escaped = label.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+function getOverlayPayload(slide) {
+  if (slide?.label_parts?.primary || slide?.label_parts?.secondary) {
+    return JSON.stringify({
+      primary: slide.label_parts.primary ?? '',
+      secondary: slide.label_parts.secondary ?? '',
+    });
+  }
+  return slide.label;
+}
+
+function overlayText(src, slide, dest) {
+  const payload = getOverlayPayload(slide);
+  const escaped = payload.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
   execSync(`"${process.execPath}" "${OVERLAY_SCRIPT}" "${src}" "${escaped}" "${dest}"`, {
     cwd: ROOT,
     env: {
@@ -218,6 +230,42 @@ function overlayText(src, label, dest) {
     },
     stdio: 'inherit',
   });
+}
+
+function getListicleItemNumber(slideNumber) {
+  return Math.max(1, slideNumber - 1);
+}
+
+function combineLabelParts(parts) {
+  const primary = typeof parts?.primary === 'string' ? parts.primary.trim() : '';
+  const secondary = typeof parts?.secondary === 'string' ? parts.secondary.trim() : '';
+  return [primary, secondary].filter(Boolean).join(' ');
+}
+
+function stripLeadingNumber(text) {
+  return (text || '').replace(/^\s*\d+\.\s*/, '').trim();
+}
+
+function normalizeUpgradesSlideLabel(slide) {
+  if (slide.n === 1) {
+    delete slide.label_parts;
+    return;
+  }
+
+  const expectedNumber = `${getListicleItemNumber(slide.n)}. `;
+  const primary = typeof slide.label_parts?.primary === 'string' ? slide.label_parts.primary.trim() : '';
+  const secondary = typeof slide.label_parts?.secondary === 'string' ? slide.label_parts.secondary.trim() : '';
+  const fallbackLabel = typeof slide.label === 'string' ? slide.label.trim() : '';
+
+  const normalizedPrimaryBase = stripLeadingNumber(primary || fallbackLabel || `item ${getListicleItemNumber(slide.n)}`);
+  const normalizedPrimary = `${expectedNumber}${normalizedPrimaryBase}`.trim();
+  const normalizedSecondary = secondary || stripLeadingNumber(fallbackLabel) || 'this shift changes how you carry the moment after it happens';
+
+  slide.label_parts = {
+    primary: normalizedPrimary,
+    secondary: normalizedSecondary,
+  };
+  slide.label = combineLabelParts(slide.label_parts) || normalizedPrimary;
 }
 
 function sleep(ms) {
@@ -348,21 +396,38 @@ Select the one best caption that fits the tone and content`;
 function getVisualDirectionPool(profileName, profile) {
   if (profileName === 'upgrades' || profile?.niche?.includes('Voice journaling')) {
     return {
-      aestheticModes: [
-        'golden-hour release',
-        'expansive horizon clarity',
-        'nature-led transformation',
-        'quiet triumph',
-        'reflective warmth',
-        'luminous scenic uplift',
+      anchorAestheticModes: [
+        'intimate editorial realism',
+        'luminous portrait aftermath',
+        'quiet strength portraiture',
+        'clean cinematic honesty',
+        'emotional close-up stillness',
       ],
-      tensionTypes: [
+      followUpAestheticModes: [
+        'threshold realism',
+        'luminous release',
+        'quiet movement',
+        'cinematic recovery',
+        'scenic aftermath',
+      ],
+      emotionalTensions: [
         'release',
         'breakthrough',
         'arrival',
         'self-trust',
         'becoming',
+        'aftermath',
       ],
+      anchorPortraitVariations: {
+        emotion: ['relief', 'grief', 'quiet strength', 'self-trust', 'overwhelm', 'release', 'clarity', 'defiance', 'tenderness', 'aftermath'],
+        gaze: ['direct gaze', 'near-direct gaze', 'eyes lowered', 'eyes closed', 'looking just past camera'],
+        crop: ['full-face close-up', 'forehead-to-mouth crop', 'eyes-dominant crop', 'cheek-and-jaw crop', 'half-face crop'],
+        light: ['sunrise warmth', 'soft overcast light', 'window side-light', 'golden-hour spill', 'cool clean daylight'],
+        colorGrade: ['warm amber', 'desaturated blue-grey', 'clean neutral editorial', 'dusty peach', 'luminous gold', 'muted olive', 'sea glass blue'],
+        identity: ['Black woman with natural hair', 'East Asian woman with clean editorial styling', 'South Asian woman with soft window-lit realism', 'Latina woman with textured cinematic warmth', 'Middle Eastern woman with luminous natural skin detail', 'white woman with understated styling and visible skin texture', 'Black man with quiet editorial softness', 'East Asian man with calm cinematic realism', 'South Asian man with natural skin detail and emotional presence', 'Latino man with soft directional light'],
+        styling: ['bare minimal styling', 'slightly windblown hair', 'post-cry softness', 'polished calm', 'undone but elevated'],
+        surfaceDetail: ['dewy skin', 'freckles and natural skin texture', 'tear track sheen', 'shadow bands across skin', 'wind on hair', 'soft lived-in makeup', 'no-makeup realism'],
+      },
     };
   }
 
@@ -389,11 +454,35 @@ function getVisualDirectionPool(profileName, profile) {
 }
 
 function pickCarouselVisualDirection(profileName = null, profile = null) {
-  const { aestheticModes, tensionTypes } = getVisualDirectionPool(profileName, profile);
+  const pool = getVisualDirectionPool(profileName, profile);
+
+  if (profileName === 'upgrades' || profile?.niche?.includes('Voice journaling')) {
+    const variationPool = pool.anchorPortraitVariations;
+    return {
+      anchorPortraitDirection: {
+        selectedAesthetic: pool.anchorAestheticModes[Math.floor(Math.random() * pool.anchorAestheticModes.length)],
+        selectedTension: pool.emotionalTensions[Math.floor(Math.random() * pool.emotionalTensions.length)],
+      },
+      followUpWorldDirection: {
+        selectedAesthetic: pool.followUpAestheticModes[Math.floor(Math.random() * pool.followUpAestheticModes.length)],
+        selectedTension: pool.emotionalTensions[Math.floor(Math.random() * pool.emotionalTensions.length)],
+      },
+      anchorVariation: {
+        emotion: variationPool.emotion[Math.floor(Math.random() * variationPool.emotion.length)],
+        gaze: variationPool.gaze[Math.floor(Math.random() * variationPool.gaze.length)],
+        crop: variationPool.crop[Math.floor(Math.random() * variationPool.crop.length)],
+        light: variationPool.light[Math.floor(Math.random() * variationPool.light.length)],
+        colorGrade: variationPool.colorGrade[Math.floor(Math.random() * variationPool.colorGrade.length)],
+        identity: variationPool.identity[Math.floor(Math.random() * variationPool.identity.length)],
+        styling: variationPool.styling[Math.floor(Math.random() * variationPool.styling.length)],
+        surfaceDetail: variationPool.surfaceDetail[Math.floor(Math.random() * variationPool.surfaceDetail.length)],
+      },
+    };
+  }
 
   return {
-    selectedAesthetic: aestheticModes[Math.floor(Math.random() * aestheticModes.length)],
-    selectedTension: tensionTypes[Math.floor(Math.random() * tensionTypes.length)],
+    selectedAesthetic: pool.aestheticModes[Math.floor(Math.random() * pool.aestheticModes.length)],
+    selectedTension: pool.tensionTypes[Math.floor(Math.random() * pool.tensionTypes.length)],
   };
 }
 
@@ -409,6 +498,18 @@ function shuffleArray(values) {
 function getMotifFamilyOrder(profile, count) {
   const families = Array.isArray(profile.visualMotifFamilies) ? profile.visualMotifFamilies.filter(Boolean) : [];
   if (families.length === 0) return [];
+  if (families.some(family => family.toLowerCase().startsWith('body signal:'))) {
+    const sequence = [
+      families.find(family => family.toLowerCase().startsWith('body signal:')),
+      families.find(family => family.toLowerCase().startsWith('emotional environment:')),
+      families.find(family => family.toLowerCase().startsWith('regulation ritual:')),
+      families.find(family => family.toLowerCase().startsWith('release landscape:')),
+      families.find(family => family.toLowerCase().startsWith('aftermath still life:')),
+      families.find(family => family.toLowerCase().startsWith('emotional environment:')),
+      families.find(family => family.toLowerCase().startsWith('release landscape:')),
+    ].filter(Boolean);
+    return sequence.slice(0, Math.max(0, count - 1));
+  }
   const shuffled = shuffleArray(families);
   const needed = Math.max(0, count - 1);
   const order = [];
@@ -425,63 +526,53 @@ function formatMotifFamilies(families) {
 function getMotifFamilyPromptGuidance(motifFamily) {
   const family = (motifFamily || '').toLowerCase();
 
-  if (family.includes('expansive landscape release')) {
+  if (family.includes('body signal')) {
     return {
-      focus: 'sweeping coastlines, overlooks, mountain valleys, cliff edges, open roads, or broad natural spaces that feel like emotional exhale and freedom',
-      light: 'sunrise glow, sunset backlight, luminous clean daylight, or warm high-altitude light',
-      palette: 'golden amber, sky blue, sea glass, warm stone, soft green, and sunlit neutrals',
-      composition: 'bold scenic scale with one dominant focal subject, strong horizon or depth line, and instantly readable beauty',
-      hardAvoids: 'No bleak interiors, concrete hallways, parked car scenes, urban grime, or tiny low-impact subjects swallowed by dull empty space',
+      focus: 'cropped gestures like hands at face, neck, chest, shoulder, walking legs, back of head, or posture shifts that make the emotion feel embodied rather than explained',
+      light: 'window side-light, soft overcast, hallway spill, or warm directional natural light',
+      palette: 'skin tones, warm neutrals, dusty peach, muted olive, clean greys, and softened amber',
+      composition: 'tight editorial crop with bodily tension, emotional immediacy, and no full face or full body',
+      hardAvoids: 'No direct portrait framing, no full face, no influencer pose, and no body fragment floating without context or emotional purpose',
     };
   }
 
-  if (family.includes('sunset horizon emotion')) {
+  if (family.includes('emotional environment')) {
     return {
-      focus: 'sunsets, sunrises, glowing cloud banks, horizon lines, open water, desert skies, or sky-dominant scenes that carry emotional warmth and hope',
-      light: 'golden-hour flare, backlit clouds, soft radiant dusk, or crisp early-morning light',
-      palette: 'peach, amber, coral, warm blue, lavender-grey, and luminous sand tones',
-      composition: 'one dominant horizon-led image with strong sky presence, emotional color, and clean cinematic depth',
-      hardAvoids: 'No noir mood, heavy shadow dominance, muddy grey palettes, urban night residue, or cluttered foreground objects',
+      focus: 'open roads, train windows, ocean edges, stairwells, car-window rain, desert dusk, threshold interiors, or architectural spaces that externalize emotion at larger scale',
+      light: 'cool clean daylight, dusk spill, overcast diffusion, sunset backlight, or moody threshold light with readable beauty',
+      palette: 'desaturated blue-grey, warm stone, dusty peach, sea glass, clean neutral editorial, and amber highlights',
+      composition: 'one clear environment with strong depth, threshold energy, and emotional scale rather than clutter',
+      hardAvoids: 'No generic urban grime, no dead concrete emptiness, no random travel-stock framing, and no tiny low-impact subject swallowed by dull space',
     };
   }
 
-  if (family.includes('triumphant path or summit')) {
+  if (family.includes('regulation ritual')) {
     return {
-      focus: 'a trail, ridgeline, steps, a summit edge, a winding path, or a viewpoint that suggests progress, breakthrough, and grounded victory',
-      light: 'clear sunrise, triumphant sunset, bright mountain air, or warm directional light',
-      palette: 'warm stone, sunlit earth, amber sky, clear blue, and energized natural color',
-      composition: 'forward-moving lines, scenic depth, elevated perspective, and a sense of upward momentum',
-      hardAvoids: 'No empty room tension, noir restraint, urban decay, or static tabletop still lifes',
+      focus: 'tea steam, curtain light, shower steam, bed linen, ceramic cup, shoes at a threshold, open window, or another grounded ritual scene that implies regulation, care, or recovery',
+      light: 'sunlit window glow, warm morning brightness, golden-hour spill, or clean overcast light',
+      palette: 'paper cream, warm sand, honey light, pale blue, natural wood, and softened green',
+      composition: 'tight but cinematic framing around one ritual scene with warmth, clarity, and emotional usefulness',
+      hardAvoids: 'No books, journals, pages, generic beige wellness flat lays, tech clutter, or props that feel staged for a productivity ad',
     };
   }
 
-  if (family.includes('calm reflective nature')) {
+  if (family.includes('release landscape')) {
     return {
-      focus: 'still water, wind through tall grass, flowers, trees in warm light, gentle waves, or natural textures that feel calming, clear, and alive',
-      light: 'golden-hour softness, luminous overcast brightness, clean morning light, or reflective sunset glow',
-      palette: 'soft green, sky blue, warm gold, sand, sea glass, and fresh neutral tones',
-      composition: 'one emotionally legible natural subject with softness, motion, and serene cinematic depth',
-      hardAvoids: 'No stacked stones, generic spa props, muddy darkness, or repetitive close-up moss-and-rock filler',
+      focus: 'horizon lines, overlooks, ridgelines, shorelines, paths, fields, or sky breaks that feel like exhale, breakthrough, arrival, or aftermath',
+      light: 'sunrise glow, sunset backlight, luminous clean daylight, or weather-clearing light',
+      palette: 'luminous gold, warm stone, sky blue, sea glass, soft green, and energized neutral color',
+      composition: 'scenic release with strong horizon or path logic, emotional scale, and one memorable focal shape',
+      hardAvoids: 'No postcard travel cliché, no muddy low-contrast filler, no tiny subject lost in empty space, and no dark oppressive weather as the dominant mood',
     };
   }
 
-  if (family.includes('partial or distant human presence')) {
+  if (family.includes('aftermath still life')) {
     return {
-      focus: 'a distant figure, back view, cropped shoulder, hand, or silhouette interacting with a beautiful environment in a way that feels relatable, healing, and emotionally open',
-      light: 'sunset rim light, sunrise glow, clean daylight, or warm window light connected to nature',
-      palette: 'sunlit skin tones, warm neutrals, sky blue, peach, soft green, and luminous amber',
-      composition: 'human presence should support the environment, with strong scenic context, emotional clarity, and no direct face-forward portrait framing',
-      hardAvoids: 'No full face, no full body, no selfie framing, no influencer pose, no gym-style triumph clichés, and no body fragment floating without a clear environment',
-    };
-  }
-
-  if (family.includes('tactile wellness ritual')) {
-    return {
-      focus: 'tea, blanket, ceramic cup, open window, linen curtain, bare feet on warm stone, or another lived-in ritual object that feels restorative and hopeful without involving paper or text-bearing objects',
-      light: 'sunlit window glow, golden-hour spill, soft morning brightness, or warm natural light',
-      palette: 'paper cream, warm sand, honey light, soft green, pale sky blue, and natural wood',
-      composition: 'tight but inviting editorial framing around one tactile ritual scene with warmth, beauty, and emotional immediacy',
-      hardAvoids: 'No books, journals, notebooks, open pages, readable paper, generic desk flat lays, dim lonely interiors, tangled-cord melancholy, harsh clutter, or cold tech-first object scenes',
+      focus: 'one tactile non-text object with emotional residue, quiet tension, or recovery energy: half-open curtain, dented pillow, fogged mirror, coat on chair, cooling tea, shoes by the door',
+      light: 'window side-light, soft morning spill, dusk room glow, or clean overcast brightness',
+      palette: 'muted olive, warm grey, dusty peach, natural wood, honey light, and cool clean whites',
+      composition: 'one-object or one-scene editorial restraint with clear emotional suggestion and no flat-lay look',
+      hardAvoids: 'No generic decor styling, no productivity desk setups, no pages or text-bearing objects, and no cold sterile minimalism with zero emotional residue',
     };
   }
 
@@ -494,7 +585,7 @@ function getMotifFamilyPromptGuidance(motifFamily) {
   };
 }
 
-function inspectImagePrompt(text, motifFamily = null) {
+function inspectSlidePrompt(text, motifFamily = null) {
   const normalized = (text || '').toLowerCase();
   const violations = [];
 
@@ -510,17 +601,16 @@ function inspectImagePrompt(text, motifFamily = null) {
   }
 
   const family = (motifFamily || '').toLowerCase();
-  if (!family.includes('partial or distant human presence') && /\bhand\b|\bhands\b|\bwrist\b|\bforearm\b|\bfingers?\b|\bshoulder\b|\bsilhouette\b/.test(normalized)) {
-    violations.push('uses body-fragment language outside partial or distant human presence motif');
+  if (!family.includes('body signal') && /\bhand\b|\bhands\b|\bwrist\b|\bforearm\b|\bfingers?\b|\bshoulder\b|\bsilhouette\b|\bback of head\b|\blegs\b/.test(normalized)) {
+    violations.push('uses body-fragment language outside body signal motif');
   }
 
   const allowsNatureLanguage = [
-    'expansive landscape release',
-    'sunset horizon emotion',
-    'triumphant path or summit',
-    'calm reflective nature',
-    'partial or distant human presence',
-    'tactile wellness ritual',
+    'emotional environment',
+    'regulation ritual',
+    'release landscape',
+    'aftermath still life',
+    'body signal',
   ].some(name => family.includes(name));
 
   if (!allowsNatureLanguage && /\bwater\b|\bripple\b|\bripples\b|\bstone\b|\bstones\b|\bmoss\b|\bleaf\b|\bleaves\b|\broot\b|\broots\b|\bfog\b|\bmist\b|\bforest\b/.test(normalized)) {
@@ -533,9 +623,35 @@ function inspectImagePrompt(text, motifFamily = null) {
   };
 }
 
+function inspectAnchorPrompt(text, profileName = null) {
+  const normalized = (text || '').toLowerCase();
+  const violations = [];
+
+  const bannedPatterns = [
+    { pattern: /\bphone screens?\b|\bsmartphone\b|\bphone ui\b|\bapp ui\b|\bapp interface\b|\bscreenshot\b/, reason: 'contains phone/app UI language' },
+    { pattern: /\blogos?\b|\bwatermarks?\b|\bvisible text\b|\btypography\b|\bwords\b/, reason: 'contains text/logo language' },
+    { pattern: /\bbooks?\b|\bjournals?\b|\bnotebooks?\b|\bpages?\b|\bpaper\b|\bhandwriting\b|\bwritten\b|\bwriting\b/, reason: 'contains text-bearing paper object language' },
+    { pattern: /\bselfie\b|\binfluencer portrait\b|\bphone-camera\b/, reason: 'contains disallowed selfie/influencer language' },
+  ];
+
+  for (const rule of bannedPatterns) {
+    if (rule.pattern.test(normalized)) violations.push(rule.reason);
+  }
+
+  if (profileName !== 'upgrades' && /\bfull face\b|\bface visible\b|\blooking at camera\b|\bdirect eye contact\b/.test(normalized)) {
+    violations.push('contains disallowed face/portrait language');
+  }
+
+  return {
+    cleaned: cleanAnchorPrompt(text),
+    violations,
+  };
+}
+
 async function repairImagePrompt({
   originalPrompt,
   profile,
+  profileName,
   topic,
   hook,
   label,
@@ -544,8 +660,21 @@ async function repairImagePrompt({
   visualDirection,
   type,
 }) {
-  const { selectedAesthetic, selectedTension } = visualDirection ?? pickCarouselVisualDirection(null, profile);
+  const isUpgrades = profileName === 'upgrades' || profile?.niche?.includes('Voice journaling');
+  const isAnchor = type === 'anchor';
+  const fallbackDirection = pickCarouselVisualDirection(profileName ?? null, profile);
+  const portraitDirection = visualDirection?.anchorPortraitDirection;
+  const followUpDirection = visualDirection?.followUpWorldDirection;
+  const direction = isUpgrades
+    ? (isAnchor ? portraitDirection : followUpDirection)
+    : (visualDirection ?? fallbackDirection);
+  const fallbackLeaf = isUpgrades
+    ? (isAnchor ? fallbackDirection.anchorPortraitDirection : fallbackDirection.followUpWorldDirection)
+    : fallbackDirection;
+  const selectedAesthetic = direction?.selectedAesthetic ?? visualDirection?.selectedAesthetic ?? fallbackLeaf?.selectedAesthetic;
+  const selectedTension = direction?.selectedTension ?? visualDirection?.selectedTension ?? fallbackLeaf?.selectedTension;
   const motifGuidance = getMotifFamilyPromptGuidance(motifFamily);
+  const anchorVariation = visualDirection?.anchorVariation;
   const prompt = await llmCall(`Rewrite this ${type} image-generation prompt so it obeys all constraints while preserving the original creative idea as much as possible.
 
 Context:
@@ -557,17 +686,26 @@ Context:
 - Aesthetic mode: ${selectedAesthetic}
 - Core visual tension: ${selectedTension}
 - Slide number: ${slideNumber || 'anchor'}
+${isUpgrades && isAnchor && anchorVariation ? `- Anchor emotion: ${anchorVariation.emotion}
+- Anchor gaze: ${anchorVariation.gaze}
+- Anchor crop: ${anchorVariation.crop}
+- Anchor light: ${anchorVariation.light}
+- Anchor color grade: ${anchorVariation.colorGrade}
+- Anchor identity direction: ${anchorVariation.identity}
+- Anchor styling: ${anchorVariation.styling}
+- Anchor surface detail: ${anchorVariation.surfaceDetail}` : ''}
 
 Hard rules:
 - Return ONLY the final prompt string
 - One dominant focal subject
 - No phone screens, smartphones, app UI, app interface, screenshots, logos, watermarks, or visible text
 - No books, journals, notebooks, open pages, readable paper, or any object with visible writing
-- No full face, selfie, influencer portrait, direct eye contact, or full body
 - Keep it photorealistic and cinematic, not a graphic design concept
 - Preserve the same carousel visual world and emotional tension
 - Keep the result scroll-stopping, beautiful, emotionally legible, and wellness-adjacent rather than obscure, gloomy, or overly abstract
-- If human presence is used, keep it partial or obscured
+- ${isUpgrades && isAnchor
+    ? 'This is the anchor portrait. Full face, direct or near-direct gaze, and close-up editorial portrait framing are allowed and encouraged. Do not turn it into a selfie, influencer pose, or generic beauty ad.'
+    : 'If human presence is used, keep it partial or obscured. No full face, no influencer portrait, and no full body.'}
 ${motifGuidance.hardAvoids ? `- ${motifGuidance.hardAvoids}` : ''}
 
 Original prompt to repair:
@@ -581,7 +719,11 @@ async function generateAnchorPrompt({ profileName, profile, topic, hook, recentA
     ? 'No recent anchor history.'
     : recentAnchors.map((entry, index) => `${index + 1}. topic="${entry.topic}" | hook="${entry.slide_1_label ?? 'unknown'}" | prompt="${entry.anchor_prompt ?? 'unknown'}"`).join('\n');
 
-  const { selectedAesthetic, selectedTension } = visualDirection ?? pickCarouselVisualDirection(profileName, profile);
+  const fallbackDirection = pickCarouselVisualDirection(profileName, profile);
+  const direction = visualDirection?.anchorPortraitDirection ?? visualDirection ?? fallbackDirection.anchorPortraitDirection ?? fallbackDirection;
+  const variation = visualDirection?.anchorVariation ?? null;
+  const selectedAesthetic = direction.selectedAesthetic;
+  const selectedTension = direction.selectedTension;
 
   const prompt = await llmCall(`Write one image-generation prompt for a TikTok carousel anchor image.
 
@@ -609,12 +751,24 @@ ${historyBlock}
 Creative Direction:
 - Aesthetic mode: ${selectedAesthetic}
 - Core visual tension: ${selectedTension}
+${variation ? `- Portrait emotion: ${variation.emotion}
+- Gaze: ${variation.gaze}
+- Crop: ${variation.crop}
+- Light: ${variation.light}
+- Color grade: ${variation.colorGrade}
+- Identity direction: ${variation.identity}
+- Styling direction: ${variation.styling}
+- Surface detail: ${variation.surfaceDetail}` : ''}
 
 Core Rules:
 - Return ONLY the final prompt string
 - One dominant focal subject
 - Topic-relevant, but not literal, cheesy, or overly explanatory
 - Build around one clear visual idea, not multiple competing ideas
+- This anchor should be a close-up human face, not a landscape, object still life, or distant figure
+- Full face is allowed
+- Direct gaze or near-direct gaze is preferred
+- The portrait should feel editorial and cinematic, not like a selfie, influencer ad, or beauty campaign
 
 Scroll Psychology:
 - The image must create an unresolved moment
@@ -629,17 +783,18 @@ Composition:
 Visual Strategy:
 - Apply the aesthetic mode as the primary visual language
 - Build the image around one visual tension
-- Favor scenic beauty, emotional release, expansiveness, natural grandeur, or healing momentum
+- Make the face emotionally specific and immediately legible at thumbnail size
 - Let the frame feel like a film still, but also like something a wellness viewer would want to save or send
-- Prefer sunsets, horizons, landscapes, warm interiors connected to nature, and partial or distant human presence over dim symbolic object scenes
+- Prioritize skin texture, real emotion, expressive light, and intimate framing over scenic symbolism
 
 Hard Avoids:
 - No phone screens, fake app UI, logos, or visible text
 - No books, journals, notebooks, paper pages, stationery flat lays, or any readable writing artifact
 - No generic desk still lifes, flat lays, beige wellness stock imagery, low-contrast compositions, centered object-only still lifes, or cliché zen imagery
+- No selfie framing, no influencer smile, no polished ad-beauty perfection, and no glam editorial fashion vibe
 - No stacked stones
 - No empty concrete hallways, parked car interiors, urban residue noir, or bleak dim-room melancholy
-- No simple hand-holding-object-in-water image unless paired with a distinctly unusual second element
+- Do not turn this into a landscape or object scene
 
 Finish:
 - End with exactly: "photorealistic, cinematic editorial composition"
@@ -658,7 +813,10 @@ async function generateSlideImagePrompt({
   motifFamily,
   visualDirection,
 }) {
-  const { selectedAesthetic, selectedTension } = visualDirection ?? pickCarouselVisualDirection(null, profile);
+  const fallbackDirection = pickCarouselVisualDirection(null, profile);
+  const direction = visualDirection?.followUpWorldDirection ?? visualDirection ?? fallbackDirection.followUpWorldDirection ?? fallbackDirection;
+  const selectedAesthetic = direction.selectedAesthetic;
+  const selectedTension = direction.selectedTension;
   const motifGuidance = getMotifFamilyPromptGuidance(motifFamily);
   const prompt = await llmCall(`Write one image-generation prompt for slide ${slideNumber} of a TikTok carousel.
 
@@ -685,11 +843,10 @@ Requirements:
 - One dominant focal subject
 - Photorealistic and cinematic, not a graphic design concept
 - No books, journals, notebooks, open pages, readable paper, or visible writing artifacts
-- Partial human presence is allowed only if the motif family is "partial or distant human presence"
-- If the motif family is not "partial or distant human presence", do not use hands, wrists, shoulders, silhouettes, or any visible body fragment
 - No full face, no full body, no influencer portrait
-- Do not use hands, wrists, shoulders, silhouettes, or any visible body fragment unless the motif family is "partial or distant human presence"
 - No phone screens, app UI, logos, or visible text
+- If the motif family is "body signal", cropped body fragments are allowed, but never a full face or full body
+- If the motif family is not "body signal", do not use hands, wrists, shoulders, back-of-head crops, silhouettes, or any visible body fragment
 - Prioritize beautiful light, scenic depth, emotional clarity, and wellness relatability over dark symbolism
 - The image should feel save-worthy or share-worthy on TikTok within one second
 - ${motifGuidance.hardAvoids}
@@ -713,9 +870,11 @@ function logRun({ profile, topic, captionData, slides, postId, scheduledAt, anch
     hashtags:    captionData.best_hashtags,
     anchor_prompt: anchorPrompt ?? null,
     visual_direction: visualDirection ?? null,
+    anchor_variation: visualDirection?.anchorVariation ?? null,
     slides:      slides.map(s => ({
       n:            s.n,
       label:        s.label,
+      label_parts:  s.label_parts ?? null,
       motif_family: s.motif_family ?? null,
       image_prompt: s.image_prompt ?? null,
     })),
@@ -995,12 +1154,13 @@ ${slidesSchema}`, slidesSchema);
       });
     }
 
-    const inspected = inspectImagePrompt(slide.image_prompt, null);
+    const inspected = inspectSlidePrompt(slide.image_prompt, null);
     if (inspected.violations.length > 0) {
       console.log(`  Repairing invalid image prompt for slide ${slide.n}: ${inspected.violations.join(', ')}`);
       slide.image_prompt = await repairImagePrompt({
         originalPrompt: inspected.cleaned,
         profile,
+        profileName: 'wellness',
         topic: sourceTopic,
         hook,
         label: slide.label,
@@ -1019,16 +1179,22 @@ ${slidesSchema}`, slidesSchema);
 }
 
 async function planSlidesForUpgrades(sourceTopic, captionData, profile, count, visualDirection) {
-  const { selectedAesthetic, selectedTension } = visualDirection ?? pickCarouselVisualDirection();
+  const fallbackDirection = pickCarouselVisualDirection('upgrades', profile);
+  const followUpDirection = visualDirection?.followUpWorldDirection ?? visualDirection ?? fallbackDirection.followUpWorldDirection ?? fallbackDirection;
+  const anchorVariation = visualDirection?.anchorVariation ?? null;
+  const { selectedAesthetic, selectedTension } = followUpDirection;
   const motifFamilyOrder = getMotifFamilyOrder(profile, count);
-  console.log(`  Visual direction: aesthetic="${selectedAesthetic}" | tension="${selectedTension}"`);
+  console.log(`  Follow-up world: aesthetic="${selectedAesthetic}" | tension="${selectedTension}"`);
+  if (anchorVariation) {
+    console.log(`  Anchor portrait: emotion="${anchorVariation.emotion}" | gaze="${anchorVariation.gaze}" | crop="${anchorVariation.crop}" | grade="${anchorVariation.colorGrade}" | identity="${anchorVariation.identity}"`);
+  }
   console.log('  Motif rotation:');
   motifFamilyOrder.forEach((family, index) => console.log(`    ${index + 1}. ${family}`));
 
   const slidesSchema = `{
   "slides": [
     { "n": 1, "label": "..." },
-    { "n": 2, "label": "...", "motif_family": "..." }
+    { "n": 2, "label": "...", "label_parts": { "primary": "...", "secondary": "..." }, "motif_family": "..." }
   ]
 }`;
 
@@ -1044,6 +1210,7 @@ Core objective:
 - Make each slide feel natively TikTok: sharp, emotionally legible, save-worthy, and easy to read fast
 - Stay specific to the original topic's pain point, insight, mechanism, or shift
 - Do not let the broader brand niche swallow the actual idea
+- Slide 1 is a close-up face portrait anchor; slides 2+ should expand the same emotional world without repeating full-face portrait framing
 
 SLIDE 1 — ANCHOR SLIDE (${profile.anchorLabelDescription}, already cached):
 - Provide "label" only — no "image_prompt"
@@ -1056,20 +1223,30 @@ ${profile.slide1LabelInstruction
 - Optimize slide 1 for immediate recognition, swipe curiosity, saves, and shares
 
 SLIDES 2+ — imagery:
-- Provide both "label" (text overlay) and "motif_family"
+- Provide "label" (combined fallback text), "label_parts.primary", "label_parts.secondary", and "motif_family"
 - Do NOT provide "image_prompt" in the JSON output — image prompts are generated downstream
 - For each slide 2+, choose the exact motif_family from the allowed rotation below that best supports the label
 - The slide imagery must feel like the same brand world as slide 1, not a different aesthetic on each slide
 - Keep one coherent visual system across the carousel: consistent mood, lighting logic, environmental tension, and editorial feel
 - Use the same carousel visual direction on every slide:
-  - Aesthetic mode: ${selectedAesthetic}
+  - Follow-up aesthetic mode: ${selectedAesthetic}
   - Core visual tension: ${selectedTension}
 - Assign each slide a different motif_family in this order unless a later slide would become ill-fitting:
 ${formatMotifFamilies(motifFamilyOrder)}
-- Vary scenes within that world, but do not collapse every slide into moss, stones, leaves, or water textures
+- Vary scenes within that world, but do not collapse every slide into repeated portraits or random landscape filler
 - Prefer motif continuity, recurring materials, recurring spatial logic, and escalating emotional tension over random subject rotation
+- Think in terms of: body signal -> emotional environment -> regulation ritual -> release landscape -> aftermath
 
 LABEL FORMAT — choose based on topic type:
+
+For slides 2+:
+- Each slide is one numbered listicle item
+- Numbering restarts at 1 on slide 2, then increments by 1 on each following slide
+- "label_parts.primary" must start with the item number and a period, e.g. "1. ..."
+- "label_parts.primary" is the punchy headline line that should read well in a white rounded box
+- "label_parts.secondary" is the shorter supporting explanation below it in a different style
+- "label" should combine both parts into one readable sentence for logs and fallbacks
+- The primary and secondary lines should complement each other, not repeat the same words
 
 For HABIT/TIP topics (morning routines, journaling habits, wellness practices):
 - Labels = specific, actionable tips in lowercase casual first-person (12–25 words)
@@ -1080,6 +1257,7 @@ For HABIT/TIP topics (morning routines, journaling habits, wellness practices):
 - NO sensory atmosphere, NO poetic metaphor, NO describing objects as ceremonial or symbolic
 - Arc: hook → tip 1 → tip 2 → tip 3 → satisfying close
 - When slide 1 is a listicle hook, slides 2+ should cash it out as numbered or clearly distinct shifts, signs, truths, or ways
+- Make the numbered primary line specific and skimmable; put the explanation or payoff in the secondary line
 
 For CONCEPT/EDUCATION topics (CBT, stoicism, mindfulness, radical presence, science of meditation):
 Choose ONE of these formats based on what fits the concept best:
@@ -1091,6 +1269,7 @@ FORMAT B — Reframe/Insight: each slide is one sharp, punchy insight or reframe
 FORMAT C — Story arc (Problem → Insight → Shift): slide 1 names a relatable problem. Middle slides walk through the concept as the explanation/solution. Last slide = one practical shift the viewer can make today.
 
 Labels for concept slides: plain, specific, 10–22 words. Lowercase. No jargon. Reads like a clear thought, not a bullet point.
+- For concept slides 2+, put the insight/reframe in the numbered primary line and the clarification/payoff in the secondary line
 
 VIRAL OVERLAY RULES:
 - Each label should feel like something a real person would screenshot, send, or think "wait, that's me"
@@ -1129,8 +1308,11 @@ ${slidesSchema}`, slidesSchema);
     if (slide.n === 1) {
       delete slide.image_prompt;
       delete slide.motif_family;
+      delete slide.label_parts;
       continue;
     }
+
+    normalizeUpgradesSlideLabel(slide);
 
     const fallbackFamily = motifFamilyOrder[Math.max(0, index - 1)] ?? motifFamilyOrder[(slide.n - 2) % Math.max(motifFamilyOrder.length, 1)] ?? null;
     if (typeof slide.motif_family !== 'string' || !slide.motif_family.trim()) {
@@ -1148,12 +1330,13 @@ ${slidesSchema}`, slidesSchema);
       visualDirection,
     });
 
-    const inspected = inspectImagePrompt(slide.image_prompt, slide.motif_family);
+    const inspected = inspectSlidePrompt(slide.image_prompt, slide.motif_family);
     if (inspected.violations.length > 0) {
       console.log(`  Repairing invalid image prompt for slide ${slide.n}: ${inspected.violations.join(', ')}`);
       slide.image_prompt = await repairImagePrompt({
         originalPrompt: inspected.cleaned,
         profile,
+        profileName: 'upgrades',
         topic: sourceTopic,
         hook,
         label: slide.label,
@@ -1167,7 +1350,13 @@ ${slidesSchema}`, slidesSchema);
     }
   }
 
-  slides.forEach(s => console.log(`  ${s.n}. "${s.label}"`));
+  slides.forEach(s => {
+    if (s.label_parts?.primary || s.label_parts?.secondary) {
+      console.log(`  ${s.n}. "${s.label_parts.primary}" | "${s.label_parts.secondary}"`);
+      return;
+    }
+    console.log(`  ${s.n}. "${s.label}"`);
+  });
   return slides;
 }
 
@@ -1258,12 +1447,13 @@ async function main() {
       }
       prompt = profile.anchorPrompt(anchorInputs);
     }
-    const anchorInspection = inspectImagePrompt(prompt);
+    const anchorInspection = inspectAnchorPrompt(prompt, pInput);
     if (anchorInspection.violations.length > 0) {
       console.log(`  Repairing anchor prompt: ${anchorInspection.violations.join(', ')}`);
       prompt = await repairImagePrompt({
         originalPrompt: anchorInspection.cleaned,
         profile,
+        profileName: pInput,
         topic,
         hook: slides[0]?.label ?? captionData.best_caption,
         motifFamily: null,
@@ -1274,7 +1464,13 @@ async function main() {
       prompt = anchorInspection.cleaned;
     }
     anchorPromptUsed = prompt;
-    console.log(`  Visual direction: aesthetic="${visualDirection.selectedAesthetic}" | tension="${visualDirection.selectedTension}"`);
+    if (visualDirection?.anchorPortraitDirection) {
+      console.log(`  Anchor portrait direction: aesthetic="${visualDirection.anchorPortraitDirection.selectedAesthetic}" | tension="${visualDirection.anchorPortraitDirection.selectedTension}"`);
+      console.log(`  Anchor variation: emotion="${visualDirection.anchorVariation?.emotion}" | gaze="${visualDirection.anchorVariation?.gaze}" | crop="${visualDirection.anchorVariation?.crop}" | grade="${visualDirection.anchorVariation?.colorGrade}" | identity="${visualDirection.anchorVariation?.identity}"`);
+      console.log(`  Follow-up world direction: aesthetic="${visualDirection.followUpWorldDirection?.selectedAesthetic}" | tension="${visualDirection.followUpWorldDirection?.selectedTension}"`);
+    } else {
+      console.log(`  Visual direction: aesthetic="${visualDirection.selectedAesthetic}" | tension="${visualDirection.selectedTension}"`);
+    }
     console.log(`  Anchor prompt: ${prompt}`);
     const predId = await replicateSubmit('black-forest-labs/flux-1.1-pro', {
       prompt, aspect_ratio: '9:16',
@@ -1328,7 +1524,7 @@ async function main() {
     process.env.OVERLAY_FONT = profile.overlayStyle?.font || '';
     process.env.OVERLAY_ALIGN = profile.overlayStyle?.align || '';
     process.env.OVERLAY_SCALE = String(profile.overlayStyle?.scale ?? 1);
-    overlayText(src, s.label, dest);
+    overlayText(src, s, dest);
     labeled[s.n] = dest;
   }
 
