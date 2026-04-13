@@ -9,6 +9,12 @@ node pipeline.js                                      # Interactive: also prompt
 npm start                                 # Alias for node pipeline.js
 ```
 
+## Captions only
+```
+node pipeline.js --captions-only --profile upgrades "mindset shifts that turn pain into power"   # Generate caption + slide labels only; skips all image generation
+node pipeline.js --captions-only --profile wellness "what I stopped doing in the morning"         # Same for wellness
+```
+
 ## Manual scheduling prompt
 ```
 PROMPT_SCHEDULE=1 node pipeline.js --profile wellness "enter topic"   # Re-enable manual schedule prompt

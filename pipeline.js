@@ -5,6 +5,7 @@
  * Usage:
  *   node pipeline.js                    # interactive
  *   node pipeline.js "morning routine"  # pass topic directly
+ *   node pipeline.js --captions-only --profile upgrades "topic"  # test captions/slide labels only
  *   REGEN_ANCHOR=1 node pipeline.js     # force-regenerate the anchor girl image
  *   REGEN_ANCHOR=1 node pipeline.js --anchor-only --profile upgrades "topic"  # regenerate only the anchor image
  */
@@ -70,7 +71,8 @@ Image prompt formula: "{Specific subject and action or texture}. {Authentic ligh
     useAiAnchorPrompt: true,
     anchorPath: join(ROOT, 'media', 'anchor_upgrades.jpg'),
     anchorLabelDescription: 'brand anchor image',
-    slide1LabelInstruction: 'Label MUST start with "POV:" followed by a short immersive second-person hook. Total length: 5–12 words including "POV:". Make the viewer feel seen — like you\'re naming something they\'ve lived but never said. e.g. "POV: you finally said the thing you\'ve been holding in for years", "POV: you just heard your own voice say the truth", "POV: you stopped pretending everything was fine"',
+    captionStyle: 'listicle',
+    slide1LabelInstruction: 'Label MUST be a lowercase listicle hook that mirrors the caption promise. Prefer 5 items; otherwise 7 or 3. Format should feel native to TikTok self-improvement content, e.g. "5 mindset shifts that turn pain into power", "5 signs you\'re stuck in survival mode", "5 ways to stop abandoning yourself". Keep it concrete, curiosity-led, and easy to understand instantly. Do NOT start with "POV:". Do NOT use emojis, product mentions, or vague hype.',
     negativePrompt: 'full face, direct eye contact, selfie, influencer pose, phone UI, app screenshot, visible text, logo, watermark, neon colors, clutter, collage, multiple subjects, stock photo look',
     overlayStyle: { font: 'sans', align: 'center', scale: 0.82 },
     imageStyle: `Aspirational wellness realism that stops the scroll immediately. Images should feel beautiful, emotionally legible, and uplifting without becoming cheesy or fake. Prioritize scenic, expansive, healing imagery that feels relatable to meditation, voice journaling, inner clarity, and personal growth.
@@ -304,6 +306,43 @@ function cleanAnchorPrompt(text) {
     .replace(/^```(?:text)?\n?|\n?```$/gm, '')
     .replace(/^prompt:\s*/i, '')
     .trim();
+}
+
+function getCaptionGenerationInstructions(profile) {
+  if (profile.captionStyle === 'listicle') {
+    return `Rules:
+- Generate 8 distinct TikTok caption variations for this content, then select the single best one
+- Caption body must be a lowercase one-line listicle hook
+- Caption body should ideally be 35-70 characters and must be <=150 characters (do not include hashtags in body count)
+- Every variation must use a numbered listicle format
+- Prefer 5 items; otherwise use 7 or 3
+- Winning structure: [number] + [specific pain pattern, symptom, or identity tension] + [clear payoff or transformation]
+- Each variation uses 3-5 hashtags chosen from the available set above
+- Variations must differ meaningfully in hook shell, pain pattern, and transformation
+- Optimize for instant recognition, swipe curiosity, saves, shares, and search relevance
+
+Hard avoids:
+- No emojis
+- No product or app mentions
+- No vague hype like "you need to hear this", "this changed my life", or "become your best self"
+- No generic therapy-speak unless grounded in a specific mechanism or pattern
+- No empty clickbait; create one open loop but keep the promise concrete
+
+Good examples:
+- 5 mindset shifts that turn pain into power
+- 5 signs you're stuck in survival mode
+- 5 ways to stop abandoning yourself
+- 5 truths about healing that no one says out loud
+- 5 shifts that make hard seasons feel lighter
+
+Select the one best caption that fits the tone and content`;
+  }
+
+  return `Rules:
+- Caption body <=150 characters (do not include hashtags in body count)
+- Each uses 3-5 hashtags chosen from the available set above
+- Variations must differ meaningfully in hook style and structure
+- Select the one best caption that fits the tone and content`;
 }
 
 function getVisualDirectionPool(profileName, profile) {
@@ -831,7 +870,8 @@ ${analysisSchema}`, analysisSchema);
   "ranking_rationale": "one sentence why this is best"
 }`;
 
-  const caption = await llmJson(`Generate 8 distinct TikTok caption variations for this content, then select the single best one.
+  const captionRules = getCaptionGenerationInstructions(profile);
+  const caption = await llmJson(`Generate caption variations for this content, then select the single best one.
 
 Scene: ${analysis.scene_description}
 Tone: ${analysis.target_tone}
@@ -839,11 +879,7 @@ CTA: ${analysis.cta}
 Hashtag guidance: ${analysis.hashtag_approach}
 Available hashtags: ${profile.hashtags.join(', ')}
 
-Rules:
-- Caption body ≤150 characters (do not include hashtags in body count)
-- Each uses 3–5 hashtags chosen from the available set above
-- Variations must differ meaningfully in hook style and structure
-- Select the one best caption that fits the tone and content
+${captionRules}
 
 Return JSON only (no markdown fences):
 ${captionSchema}`, captionSchema);
@@ -1015,6 +1051,9 @@ ${profile.slide1LabelInstruction
   ? `- ${profile.slide1LabelInstruction}`
   : `- Label is the hook/curiosity text overlaid on the cached anchor asset\n- Should make the viewer want to swipe`
 }
+- Slide 1 should usually mirror the same core promise as the selected caption, not invent a separate angle
+- If the caption is a listicle, slide 1 should also be a listicle
+- Optimize slide 1 for immediate recognition, swipe curiosity, saves, and shares
 
 SLIDES 2+ — imagery:
 - Provide both "label" (text overlay) and "motif_family"
@@ -1040,6 +1079,7 @@ For HABIT/TIP topics (morning routines, journaling habits, wellness practices):
 - Bad examples (too short/vague): "light that doesn't rush you", "a drink that tastes like patience"
 - NO sensory atmosphere, NO poetic metaphor, NO describing objects as ceremonial or symbolic
 - Arc: hook → tip 1 → tip 2 → tip 3 → satisfying close
+- When slide 1 is a listicle hook, slides 2+ should cash it out as numbered or clearly distinct shifts, signs, truths, or ways
 
 For CONCEPT/EDUCATION topics (CBT, stoicism, mindfulness, radical presence, science of meditation):
 Choose ONE of these formats based on what fits the concept best:
@@ -1058,6 +1098,8 @@ VIRAL OVERLAY RULES:
 - Bias toward tension, recognition, contrast, or a surprising reframe
 - Name the exact moment, symptom, mistake, pattern, or shift from the topic
 - Keep labels punchy and clean; avoid sounding like meditation app onboarding copy
+- For slide 1, prefer concrete numbered promises over abstract poetic hooks
+- Use one open loop, not multiple unanswered mysteries
 
 HARD AVOIDS:
 - Do not make every slide about "voice journaling", "your voice", "press record", "Oasis app", or "the mic"
@@ -1147,6 +1189,7 @@ async function main() {
   mkdirSync(tmp, { recursive: true });
   const positionalArgs = getPositionalArgs();
   const anchorOnly = hasFlag('--anchor-only');
+  const captionsOnly = hasFlag('--captions-only');
 
   // Profile selection
   const profileNames = Object.keys(PROFILES).join(', ');
@@ -1175,6 +1218,16 @@ async function main() {
   // ── Step 6: Slide planning ──
   const visualDirection = pickCarouselVisualDirection(pInput, profile);
   const slides = await planSlidesForProfile(pInput, topic, captionData, profile, slideCount, visualDirection);
+
+  if (captionsOnly) {
+    header('6.1', 'Captions-only output');
+    console.log(`\n  Caption:  ${captionData.best_caption}`);
+    console.log(`  Hashtags: ${captionData.best_hashtags.join(' ')}\n`);
+    slides.forEach(s => console.log(`  Slide ${s.n}: "${s.label}"`));
+    console.log('\n  Captions-only mode complete. Skipped anchor and slide image generation.');
+    rl.close();
+    return;
+  }
 
   // ── Step 6.5: Anchor image ──
   header('6.5', 'Anchor image');
