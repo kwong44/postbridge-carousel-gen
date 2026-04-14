@@ -1,5 +1,5 @@
 {
-  "post_count": 1,
+  "post_count": 2,
   "cycle": 1,
   "posts": [
     {
@@ -9,6 +9,15 @@
       "profile": "upgrades",
       "scheduled_at": "2026-04-14T19:00:00.000Z",
       "created_at": "2026-04-13T20:05:21.820Z",
+      "pb_status": "skipped"
+    },
+    {
+      "post_id": null,
+      "topic": "the pattern behind over-explaining yourself to people who misread you",
+      "category": "Self-Abandonment & Boundaries",
+      "profile": "upgrades",
+      "scheduled_at": "2026-04-15T19:00:00.000Z",
+      "created_at": "2026-04-14T20:05:07.300Z",
       "pb_status": "skipped"
     }
   ],
