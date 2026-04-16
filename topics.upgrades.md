@@ -41,7 +41,7 @@ Topics for TikTok carousels focused on emotional patterns, inner work, and menta
 - the shift that breaks a spiral before it becomes your whole day
 
 ## Identity Shifts & Letting Go
-- why growth feels lonely when your old identity no longer fits
+- why growth feels lonely when your old identity no longer fits --DONE
 - the story about yourself that's quietly limiting every new version of you
 - what happens when you stop performing the self-image that kept you safe
 - why change gets harder when your identity is built on being needed
@@ -75,6 +75,7 @@ Topics for TikTok carousels focused on emotional patterns, inner work, and menta
 - the blind spot behind blaming patterns on bad luck every time
 - how to tell if your intuition is clear or just shaped by old pain
 - the shadow pattern behind feeling drawn to what keeps destabilizing you
+
 
 
 

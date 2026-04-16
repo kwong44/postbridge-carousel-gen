@@ -1,5 +1,5 @@
 {
-  "post_count": 3,
+  "post_count": 4,
   "cycle": 1,
   "posts": [
     {
@@ -27,6 +27,15 @@
       "profile": "upgrades",
       "scheduled_at": "2026-04-16T19:00:00.000Z",
       "created_at": "2026-04-15T20:02:53.618Z",
+      "pb_status": "skipped"
+    },
+    {
+      "post_id": null,
+      "topic": "why growth feels lonely when your old identity no longer fits",
+      "category": "Identity Shifts & Letting Go",
+      "profile": "upgrades",
+      "scheduled_at": "2026-04-17T19:00:00.000Z",
+      "created_at": "2026-04-16T20:00:54.587Z",
       "pb_status": "skipped"
     }
   ],
