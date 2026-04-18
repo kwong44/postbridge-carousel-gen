@@ -65,7 +65,7 @@ Topics for TikTok carousels focused on emotional patterns, inner work, and menta
 - why emotional recovery takes longer when you're still pretending you're fine
 
 ## Shadow Patterns & Deeper Self-Awareness
-- why the traits that trigger you most usually point somewhere personal
+- why the traits that trigger you most usually point somewhere personal --DONE
 - the pattern behind choosing people who keep you emotionally uncertain
 - what your strongest reactions reveal when the moment feels bigger than it should
 - why you keep repeating a dynamic you already know hurts you
@@ -75,6 +75,7 @@ Topics for TikTok carousels focused on emotional patterns, inner work, and menta
 - the blind spot behind blaming patterns on bad luck every time
 - how to tell if your intuition is clear or just shaped by old pain
 - the shadow pattern behind feeling drawn to what keeps destabilizing you
+
 
 
 
