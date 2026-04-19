@@ -7,7 +7,7 @@ Topics for TikTok carousels focused on emotional patterns, inner work, and menta
 ## Survival Mode & Overwhelm
 - why you feel guilty when you rest even though you're already exhausted --USED
 - how to tell if you're overwhelmed or just emotionally disconnected --DONE
-- why your body still feels unsafe even when nothing is wrong
+- why your body still feels unsafe even when nothing is wrong --DONE
 - the pattern behind feeling behind no matter how much you get done
 - what keeps your mind racing long after the day is over
 - why you crash the moment things finally get quiet
@@ -75,6 +75,7 @@ Topics for TikTok carousels focused on emotional patterns, inner work, and menta
 - the blind spot behind blaming patterns on bad luck every time
 - how to tell if your intuition is clear or just shaped by old pain
 - the shadow pattern behind feeling drawn to what keeps destabilizing you
+
 
 
 

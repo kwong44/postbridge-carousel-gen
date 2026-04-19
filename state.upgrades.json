@@ -1,5 +1,5 @@
 {
-  "post_count": 6,
+  "post_count": 7,
   "cycle": 1,
   "posts": [
     {
@@ -54,6 +54,15 @@
       "profile": "upgrades",
       "scheduled_at": "2026-04-19T19:00:00.000Z",
       "created_at": "2026-04-18T19:40:38.919Z",
+      "pb_status": "skipped"
+    },
+    {
+      "post_id": null,
+      "topic": "why your body still feels unsafe even when nothing is wrong",
+      "category": "Survival Mode & Overwhelm",
+      "profile": "upgrades",
+      "scheduled_at": "2026-04-20T19:00:00.000Z",
+      "created_at": "2026-04-19T19:40:52.980Z",
       "pb_status": "skipped"
     }
   ],
