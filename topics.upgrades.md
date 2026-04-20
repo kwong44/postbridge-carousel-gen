@@ -19,7 +19,7 @@ Topics for TikTok carousels focused on emotional patterns, inner work, and menta
 ## Self-Abandonment & Boundaries
 - why you keep saying yes when your body already said no --DONE
 - the pattern behind over-explaining yourself to people who misread you --DONE
-- what makes you abandon your needs the moment someone gets uncomfortable
+- what makes you abandon your needs the moment someone gets uncomfortable --DONE
 - why resentment builds when you're always the emotionally flexible one
 - how to tell if you're being kind or slowly betraying yourself
 - the hidden cost of trying to be easy to love all the time
@@ -75,6 +75,7 @@ Topics for TikTok carousels focused on emotional patterns, inner work, and menta
 - the blind spot behind blaming patterns on bad luck every time
 - how to tell if your intuition is clear or just shaped by old pain
 - the shadow pattern behind feeling drawn to what keeps destabilizing you
+
 
 
 
