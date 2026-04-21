@@ -1,5 +1,5 @@
 {
-  "post_count": 8,
+  "post_count": 9,
   "cycle": 1,
   "posts": [
     {
@@ -73,7 +73,16 @@
       "scheduled_at": "2026-04-21T19:00:00.000Z",
       "created_at": "2026-04-20T19:59:42.729Z",
       "pb_status": "skipped"
+    },
+    {
+      "post_id": null,
+      "topic": "the pattern behind believing your worst thought when you're tired",
+      "category": "Thought Loops & Inner Dialogue",
+      "profile": "upgrades",
+      "scheduled_at": "2026-04-22T19:00:00.000Z",
+      "created_at": "2026-04-21T20:02:55.914Z",
+      "pb_status": "skipped"
     }
   ],
-  "last_anchor_regenerated_at": "2026-04-13T20:05:21.820Z"
+  "last_anchor_regenerated_at": "2026-04-21T20:02:55.914Z"
 }

@@ -30,7 +30,7 @@ Topics for TikTok carousels focused on emotional patterns, inner work, and menta
 
 ## Thought Loops & Inner Dialogue
 - why one hard moment turns into a three-hour spiral in your head --DONE
-- the pattern behind believing your worst thought when you're tired
+- the pattern behind believing your worst thought when you're tired --DONE
 - what changes when you stop treating every thought like a fact
 - why your brain keeps rehearsing conversations that will never happen
 - how to tell if you're reflecting or just looping with better vocabulary
@@ -75,6 +75,7 @@ Topics for TikTok carousels focused on emotional patterns, inner work, and menta
 - the blind spot behind blaming patterns on bad luck every time
 - how to tell if your intuition is clear or just shaped by old pain
 - the shadow pattern behind feeling drawn to what keeps destabilizing you
+
 
 
 
