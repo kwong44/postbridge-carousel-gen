@@ -54,7 +54,7 @@ Topics for TikTok carousels focused on emotional patterns, inner work, and menta
 
 ## Regulation & Emotional Recovery
 - what actually helps after a trigger instead of just making you look calm --DONE
-- why being numb and being regulated are not the same thing
+- why being numb and being regulated are not the same thing --DONE
 - how to come back to yourself after your body says danger
 - the signs you need recovery instead of more discipline
 - what helps you feel safe again after an emotionally hard day
@@ -75,6 +75,7 @@ Topics for TikTok carousels focused on emotional patterns, inner work, and menta
 - the blind spot behind blaming patterns on bad luck every time
 - how to tell if your intuition is clear or just shaped by old pain
 - the shadow pattern behind feeling drawn to what keeps destabilizing you
+
 
 
 
