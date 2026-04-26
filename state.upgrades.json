@@ -1,5 +1,5 @@
 {
-  "post_count": 13,
+  "post_count": 14,
   "cycle": 1,
   "posts": [
     {
@@ -117,6 +117,15 @@
       "profile": "upgrades",
       "scheduled_at": "2026-04-26T19:00:00.000Z",
       "created_at": "2026-04-25T19:42:32.107Z",
+      "pb_status": "skipped"
+    },
+    {
+      "post_id": null,
+      "topic": "why resentment builds when you're always the emotionally flexible one",
+      "category": "Self-Abandonment & Boundaries",
+      "profile": "upgrades",
+      "scheduled_at": "2026-04-27T19:00:00.000Z",
+      "created_at": "2026-04-26T19:45:01.457Z",
       "pb_status": "skipped"
     }
   ],
